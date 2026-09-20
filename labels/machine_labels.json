@@ -1,0 +1,43 @@
+{
+  "labeller": "claude-opus-5, machine judge",
+  "labelled": "2026-09-20",
+  "docket": "EPA-HQ-OAR-2021-0317",
+  "basis": "cleaned text (envelope stripped), sample seed 11, cleaned embeddings",
+  "PROVENANCE": "JUDGE labels, not human labels. The spec requires judge-human agreement to be measured before any judge output enters a finding. Every precision/recall figure derived from these is PROVISIONAL until a human labels a subset. labels/for_human.jsonl holds the subset to label.",
+  "coverage": "Pairs 40-139 (bands 0.80 and above) were each read individually. Pairs 0-39 (bands 0.60-0.80) were NOT individually read; 8 were spot-checked at random and all 8 were distinct. They are recorded as unlabelled, not as negatives.",
+  "labels": {
+    "40":"distinct","41":"distinct","42":"distinct","43":"distinct","44":"variant",
+    "45":"distinct","46":"distinct","47":"distinct","48":"distinct","49":"distinct",
+    "50":"distinct","51":"distinct","52":"distinct","53":"distinct","54":"distinct",
+    "55":"distinct","56":"distinct","57":"distinct","58":"distinct","59":"distinct",
+
+    "60":"same","61":"distinct","62":"variant","63":"distinct","64":"distinct",
+    "65":"distinct","66":"distinct","67":"distinct","68":"distinct","69":"distinct",
+    "70":"distinct","71":"same","72":"distinct","73":"distinct","74":"distinct",
+    "75":"distinct","76":"distinct","77":"same","78":"distinct","79":"distinct",
+
+    "80":"distinct","81":"distinct","82":"distinct","83":"distinct","84":"same",
+    "85":"distinct","86":"same","87":"same","88":"distinct","89":"same",
+    "90":"same","91":"distinct","92":"same","93":"unusable","94":"same",
+    "95":"same","96":"same","97":"distinct","98":"distinct","99":"variant",
+
+    "100":"same","101":"same","102":"same","103":"same","104":"same",
+    "105":"distinct","106":"variant","107":"same","108":"same","109":"same",
+    "110":"same","111":"same","112":"same","113":"same","114":"same",
+    "115":"same","116":"same","117":"same","118":"distinct","119":"distinct",
+
+    "120":"same","121":"same","122":"same","123":"same","124":"same",
+    "125":"same","126":"same","127":"same","128":"same","129":"same",
+    "130":"same","131":"same","132":"same","133":"same","134":"same",
+    "135":"same","136":"same","137":"same","138":"same","139":"same"
+  },
+  "spot_checked_low_band_all_distinct": [5, 14, 18, 3, 26, 31, 27, 35],
+  "notes": {
+    "70": "A carries duplicateComments=36836; two different mass campaigns, not one",
+    "92": "B is A without a personal preamble; campaign body identical",
+    "93": "both excerpts end before the argument begins; not judgeable",
+    "127": "A carries duplicateComments=24885, so this single pair stands for a large campaign",
+    "129": "identical webform submission, same name; a literal duplicate record",
+    "133": "identical text AND identical document_oid 09000064855d61bc"
+  }
+}

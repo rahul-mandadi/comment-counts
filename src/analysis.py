@@ -1,0 +1,134 @@
+"""Collapse ratios, and the margin over the count the government already publishes.
+
+The unit matters more than anything else in this file. A docket has THREE
+counts, not two:
+
+    submissions  how many people pressed send      (sum of duplicateComments)
+    records      how many entries the docket holds  (what you see on the site)
+    clusters     how many distinct things were said (what a rung produces)
+
+regulations.gov already performs the submissions -> records collapse. So a rung
+that reports a huge absolute collapse has not necessarily found anything: the
+only number that is this project's own contribution is the records -> clusters
+step, and it must be reported next to the official one rather than instead of it.
+"""
+import collections
+
+import dedup
+
+
+def cluster_stats(rows, clusters):
+    """clusters: list of lists of row indices."""
+    sizes = [len(c) for c in clusters]
+    subs = [sum(rows[i]["duplicateComments"] for i in c) for c in clusters]
+    return {
+        "clusters": len(clusters),
+        "largest_cluster_records": max(sizes) if sizes else 0,
+        "largest_cluster_submissions": max(subs) if subs else 0,
+        "singletons": sum(1 for s in sizes if s == 1),
+        "multi_record_clusters": sum(1 for s in sizes if s > 1),
+    }
+
+
+def ladder_row(name, rows, clusters, baseline_records):
+    st = cluster_stats(rows, clusters)
+    st["rung"] = name
+    st["records_in"] = baseline_records
+    st["collapse_vs_records"] = round(baseline_records / max(1, st["clusters"]), 4)
+    st["extra_collapse_pct"] = round(
+        100 * (1 - st["clusters"] / max(1, baseline_records)), 2)
+    return st
+
+
+def margin_over_official(rows, clusters):
+    """What the project adds beyond regulations.gov's own duplicate count."""
+    submissions = sum(r["duplicateComments"] for r in rows)
+    records = len(rows)
+    n = len(clusters)
+    return {
+        "submissions": submissions,
+        "records": records,
+        "clusters": n,
+        "official_collapse": round(submissions / max(1, records), 2),
+        "our_additional_collapse": round(records / max(1, n), 4),
+        "total_collapse": round(submissions / max(1, n), 2),
+        # the share of the whole submissions->clusters reduction that the
+        # government had already done before this project ran
+        "share_of_collapse_already_official": round(
+            1 - (records / max(1, n) - 1) / max(1e-9, (submissions / max(1, n) - 1)), 6),
+    }
+
+
+def chain_diameter(clusters, pairs, cap=40):
+    """Longest shortest-path inside each component, for the biggest ones.
+
+    Connected components chain: A~B and B~C groups A with C even when A and C
+    are not similar. A component with a large diameter is a chain, not a
+    campaign, and reporting it as one cluster would overstate the collapse.
+    """
+    adj = collections.defaultdict(set)
+    for i, j in pairs:
+        adj[i].add(j)
+        adj[j].add(i)
+    out = []
+    for c in sorted(clusters, key=len, reverse=True)[:cap]:
+        if len(c) < 3:
+            continue
+        member = set(c)
+        best = 0
+        for src in list(c)[:64]:          # sample sources on big components
+            seen = {src: 0}
+            q = collections.deque([src])
+            while q:
+                x = q.popleft()
+                for y in adj[x]:
+                    if y in member and y not in seen:
+                        seen[y] = seen[x] + 1
+                        q.append(y)
+            best = max(best, max(seen.values()))
+        out.append({"size": len(c), "diameter": best})
+    return out
+
+
+def exact_clusters(texts):
+    g = collections.defaultdict(list)
+    for i, t in enumerate(texts):
+        g[dedup.exact_key(t)].append(i)
+    return list(g.values())
+
+
+def complete_link_clusters(vecs, threshold, index_subset=None):
+    """Agglomerative clustering with COMPLETE linkage on cosine distance.
+
+    Why this exists, and it is the most important choice in the pipeline.
+
+    Connected components over a similarity graph is SINGLE linkage: one edge is
+    enough to merge. On the semantic rung that chains. Measured on
+    EPA-HQ-OAR-2021-0317 at cosine 0.90, the largest component holds 849 records
+    and has **diameter 14** -- a path of fourteen hops, so the documents at its
+    ends are not similar to each other at all. At 0.85 it swallows 1,744 records
+    and 655,495 submissions, which is 78% of the docket, and reporting that as
+    one campaign would have been a fabricated finding.
+
+    Complete linkage requires EVERY pair in a cluster to sit above the
+    threshold, so a chain cannot form. That is also the conservative direction
+    for the asymmetry this project declared in advance: merging two genuinely
+    distinct arguments erases a member of the public from the record, and
+    splitting one campaign in two merely overstates diversity. The first is
+    worse, so the operating point favours precision.
+    """
+    import numpy as np
+    from sklearn.cluster import AgglomerativeClustering
+
+    idx = list(range(vecs.shape[0])) if index_subset is None else list(index_subset)
+    sub = vecs[idx]
+    if len(idx) == 1:
+        return [[idx[0]]]
+    model = AgglomerativeClustering(
+        n_clusters=None, metric="cosine", linkage="complete",
+        distance_threshold=1.0 - threshold)
+    labels = model.fit_predict(sub.astype(np.float64))
+    out = {}
+    for pos, lab in enumerate(labels):
+        out.setdefault(int(lab), []).append(idx[pos])
+    return list(out.values())
