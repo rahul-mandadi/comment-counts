@@ -62,3 +62,14 @@ def test_real_corpus_non_placeholders():
                  "Comment submitted by Alaska Oil and Gas Association",
                  "Useless legislation"]:
         assert not assemble.is_placeholder(body), body
+
+
+def test_a_quoted_placeholder_is_still_a_placeholder():
+    # six records on OSHA-2010-0034 have exactly this body, quote marks included
+    for body in ['"See attached"', '"see attached."', "'See attached'",
+                 '“See attached”']:
+        assert assemble.is_placeholder(body), body
+
+
+def test_quotes_around_real_content_do_not_make_it_a_placeholder():
+    assert not assemble.is_placeholder('"I oppose this rule and here is why."')

@@ -44,6 +44,14 @@ def canonical(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
+# Measured on OSHA-2010-0034: one industry form letter appears 524 times, and
+# the exact rung splits it into groups of 500 and 24 because one batch has its
+# curly quotes and en-dashes mangled into `?` by the extraction. The two are
+# 99.47% identical and differ in nothing but those characters. Exact hashing is
+# SUPPOSED to be brittle, so this is not a bug to fix there -- it is why the
+# ladder has a second rung, and the near rung merges them correctly.
+
+
 def exact_key(text):
     return hashlib.sha256(canonical(text).encode("utf-8")).hexdigest()
 

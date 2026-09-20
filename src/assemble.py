@@ -63,6 +63,10 @@ def strip_html(text):
 
 def is_placeholder(body):
     b = normalize_space(strip_html(body))
+    # strip wrapping quotes first: OSHA-2010-0034 files six records whose entire
+    # body is the string `"See attached"`, quote marks included, and the first
+    # version of this check let every one of them through as real text.
+    b = b.strip().strip('"\u201c\u201d\'\u2018\u2019').strip()
     return not b or bool(_PLACEHOLDER.match(b))
 
 

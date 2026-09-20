@@ -180,6 +180,70 @@ concentrated exactly on the population where distinctness matters most.** It did
 the headline, because the collapse is driven by short campaign letters that fit inside the cap
 comfortably. It would affect any future claim about the long tail.
 
+## THE CONTROL DOCKET, and it changed the headline
+
+OSHA-2010-0034 (respirable crystalline silica) was chosen a priori as the low-salience
+technical control. Its job was to test kill condition 3: *if the control collapses as much as
+the campaign-heavy dockets, the method is measuring writing similarity rather than
+coordination and the result is retracted.*
+
+**The control collapsed six times harder than the campaign docket.**
+
+| | EPA-HQ-OAR-2021-0317 (salient) | OSHA-2010-0034 (control) |
+|---|---|---|
+| records | 3,487 | 1,351 |
+| **official `duplicateComments`** | **836,351 submissions, 234x** | **1,351 submissions, 1.00x** |
+| records the official count flags as duplicated | 143 | **0** |
+| exact-hash collapse | 2.55% | **40.86%** |
+| semantic @0.97, complete-link | 9.12% | **54.40%** |
+
+**The trigger fired and its inference is false, and the difference matters.** Kill condition 3
+presumes that a collapsing control means the method is picking up stylistic similarity. So I
+looked at the clusters instead of applying the rule mechanically:
+
+> **524 byte-identical copies of a single industry form letter**, opening *"The Honorable
+> David Michaels... As an employer..."*, each 3,776 characters.
+
+Byte-identical text is coordination by definition. An exact hash cannot measure writing style;
+it can only find documents that are the same document. So the method is working exactly as
+intended, and the control is not a control for what it was meant to control.
+
+### What it actually found
+
+**regulations.gov applied `duplicateComments` on one docket and not at all on the other.**
+On the EPA docket the field bundles campaigns so well that independent text analysis
+reproduces its counts exactly (61,999 and 41,434, above). On the OSHA docket **every one of
+the 1,351 records carries `duplicateComments = 1`**, while 524 of them are the same letter.
+
+So the sentence this project can now defend is stronger than the one it started with:
+
+> **Whether the official record corrects for duplication depends on which docket you are
+> reading, and nothing on the page tells you which kind you have.** On one docket the
+> published count is accurate to the individual signature inside a bundled PDF. On another,
+> 524 identical letters are published as 524 comments.
+
+That makes cross-docket comparison of comment volumes invalid, which is exactly the use those
+numbers are put to in press coverage and litigation. It is a measurement-validity finding
+rather than a deduplication result, which is what the spec said this project was for.
+
+### Why the margin result still stands, and is better explained
+
+Phase 1 reported that deduplication adds 1.10x against the government's 239.85x on the EPA
+docket. That is not because deduplication is weak. **It is because on that docket the work had
+already been done.** On a docket where it has not been done, the same ladder finds a 40.86%
+exact-duplicate rate that the official count reports as zero.
+
+### Two defects this surfaced
+
+1. **A quoted placeholder.** Six OSHA records have the entire body `"See attached"`, quote
+   marks included, and the detector let every one through as real text. Fixed, with the
+   corpus strings as the test.
+2. **Mojibake splits an exact cluster.** The 524 letters land in groups of 500 and 24 because
+   one batch had its curly quotes and en-dashes mangled to `?` by extraction. The two are
+   99.47% identical. This is not a bug in the exact rung, which is meant to be brittle -- it
+   is a worked demonstration of why the ladder needs a second rung, and the near rung merges
+   them correctly.
+
 ## What this does not establish
 
 - It does not determine whether any comment is fraudulent. Distinctness is not authenticity.
