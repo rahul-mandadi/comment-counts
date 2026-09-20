@@ -19,6 +19,43 @@ loud rather than dressed up as necessity. It is still a good reason: the source
 data already lives in S3, so reading it where it sits is the natural design
 rather than a bolted-on one.
 
+## Which kind of AWS account -- checked 2026-09-20, and one option breaks the build
+
+**Do NOT use an AWS Educate Starter Account.** It is a sandbox: no Amazon
+Bedrock, and no IAM role creation. `infra/main.tf` creates an IAM role, and the
+whole Titan comparison arm is Bedrock, so both halves of Phase 2 fail. The $100
+AWS Educate credit is real and is unusable for this project.
+
+**Use a regular account on the current Free Tier.** Since 2025-07-15 a new
+account gets **$100 in credits at signup, rising to $200 by using services --
+and Bedrock is one of the named credit-earning services.** That covers the whole
+sub-$50 Phase 2 estimate several times over.
+
+At signup the account picks a plan, and the choice matters:
+
+| | Free plan | Paid plan |
+|---|---|---|
+| spending past the credits | **structurally impossible** | bills at standard rates |
+| account lifetime | closes at 6 months, or when credits run out | continues |
+
+**Take the Free plan.** A budget under $50 against $100-200 of credits does not
+need headroom, and making overspend impossible beats a billing alarm somebody
+has to notice. The six-month expiry costs nothing here: `terraform destroy`
+removes everything, and the corpus rebuilds from the public mirror on demand.
+
+**Risk to check before the full batch run:** new AWS accounts carry very low
+Bedrock throughput limits. On ~500k documents that means either a slow job or a
+quota-increase request, and it is much better found in the console beforehand
+than halfway through.
+
+Accounts created **before 2025-07-15** are on the legacy 12-month free tier and
+none of the above applies.
+
+The GitHub Student Developer Pack is worth claiming with a `.edu` address, but
+its cloud credits are Azure, DigitalOcean and Heroku rather than general AWS.
+Worth one email to Khoury IT as well: some universities hold their own AWS
+agreements that beat all of this. Unverified for Northeastern.
+
 ## One-time setup
 
 ```bash
@@ -26,6 +63,10 @@ brew install awscli
 aws configure                 # or `aws configure sso` if your org uses SSO
 aws sts get-caller-identity   # should print your account id
 ```
+
+Sign up first at aws.amazon.com with the `.edu` address and pick the **Free
+plan**. A card is required for identity verification; the Free plan does not
+charge it.
 
 ```bash
 cd ~/dev/comment-counts/infra
@@ -106,3 +147,16 @@ same labelled pairs at matched precision, and only then are collapses compared.
    spec's kill condition 4 applies and the machine labels get dropped.
 3. Terraform apply, then Phase 2 corpus assembly to S3.
 4. Titan batch embeddings, thresholds re-selected, cross-docket spread.
+
+## Secrets
+
+No key, token or credential belongs in this repo or in a chat message. The two
+this project uses are both read from the environment and never written down:
+
+```bash
+export REGULATIONS_GOV_API_KEY=...     # free, api.data.gov, public data only
+aws configure                          # writes ~/.aws/credentials, outside the repo
+```
+
+A key that has been pasted into a transcript should be regenerated rather than
+reused, however low the consequence looks. Both of these are cheap to rotate.
