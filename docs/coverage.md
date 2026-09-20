@@ -81,7 +81,35 @@ without marking which is which) does not depend on holding every record. But the
 absolute figures are not the docket's figures, and must not be reported as if they
 were until this is settled.
 
-**Not settled here, and it needs a key.** Confirming the EPA number requires
+### CONFIRMED 2026-09-20 against regulations.gov's own totals
+
+A registered key arrived and the probe was checked against the truth on all six.
+
+| docket | mirror | official | missing | holes predicted | share | probe error |
+|---|---|---|---|---|---|---|
+| ED-2021-OCR-0166 | 238,944 | 238,987 | 43 | 43 | 100.0% | **0** |
+| FDA-2021-N-1349 | 175,313 | 175,317 | 4 | 5 | 100.0% | +1 |
+| FWS-HQ-ES-2018-0006 | 64,019 | 64,021 | 2 | 2 | 100.0% | **0** |
+| **EPA-HQ-OAR-2013-0602** | 19,319 | **34,479** | **15,160** | **15,160** | **56.0%** | **0** |
+| **EPA-HQ-OAR-2021-0317** | 3,578 | 3,578 | 0 | 0 | **100.0%** | **0** |
+| OSHA-2010-0034 | 1,406 | 1,878 | 472 | 474 | 74.9% | +2 |
+| **total** | **502,579** | **518,260** | **15,681** | | **96.97%** | **3** |
+
+**The keyless probe predicted the answer to within 3 records out of 518,260.** Four dockets
+exact, two within two. Numbering-hole density is therefore a sound coverage estimate for any
+docket on this mirror, and it costs no API quota, which matters because the rate-limited API
+is the reason this project reads the mirror in the first place.
+
+**Two results that change what can be claimed:**
+
+1. **The pilot docket is 56.0% complete**, exactly as estimated. 19,319 of 34,479. Phase 0's
+   absolute figures are figures for a bit over half a docket and must never be quoted as the
+   docket's.
+2. **EPA-HQ-OAR-2021-0317 is 3,578 of 3,578 -- provably complete.** Phase 1 ran on a docket
+   with no missing records, so its 233.99 submissions per record is a whole-docket measurement
+   rather than an estimate.
+
+**Previously unsettled, now resolved.** Confirming the EPA number requires
 regulations.gov's own `totalElements` for that docket. api.data.gov's shared
 DEMO_KEY rate-limited out after three requests, and the public regulations.gov web
 front end returns 403 to scripted access for every ID, real or invented, so it
@@ -144,7 +172,7 @@ seventeen months.
 
 | spec question | answer |
 |---|---|
-| 1. Does the mirror carry these dockets, completely? | Carries all six. **Complete on four, demonstrably not on OSHA-2010-0034 (75%), and probably not on the pilot EPA-HQ-OAR-2013-0602 (~56%, pending a key).** |
+| 1. Does the mirror carry these dockets, completely? | Carries all six, **96.97% of records overall, confirmed against regulations.gov**. Complete on four; OSHA-2010-0034 is 74.9% and the pilot EPA-HQ-OAR-2013-0602 is 56.0%. |
 | 2. How far behind live? | 17 months since last write, irrelevant for six closed dockets. |
 | 3. Terms and citation | Public Domain Mark 1.0; cite as the registry specifies. |
 | 4. Is `derived-data` extraction complete? | For PDFs, yes: 8 unextracted files in 31,698. For non-PDF attachments, no, and the gap skews toward scanned individual letters. |
