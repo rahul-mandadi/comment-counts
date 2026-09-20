@@ -41,6 +41,33 @@ _SALUTATION = re.compile(
     r"Environmental\s+Protection|Secretary|Director|Sirs?|Madams?|"
     r"[A-Z][a-z]+)[^,\n]{0,60},)")
 _FDMS = re.compile(r"<\?xml.*?</fdms_submission>", re.S | re.I)
+
+# The SAME receipt, flattened by the PDF extractor into a single line and with
+# its XML tags mostly gone:
+#     Page 1 of 1 - 0900006485640465 - Jorge De Cecco - Ukiah CA United States
+#     95482 7074631653 - - <![CDATA[ Dear administrators: ...
+# 859 of 3,487 records on EPA-HQ-OAR-2021-0317 (24.6%) still carried this after
+# the well-formed shape above was handled, because it no longer looks like XML.
+# The 16-hex-digit objectId is the reliable anchor: it is the docket system's
+# own identifier and does not occur in prose.
+_FDMS_FLAT = re.compile(
+    r"^\s*(?:Page\s+\d+\s+of\s+\d+\s*[-–]\s*)?"      # optional page marker
+    r"[0-9a-f]{16}\b"                                     # the objectId
+    r".{0,400}?"                                           # name, city, phone
+    r"(?:<!\[CDATA\[|\]\]>)",                             # up to the CDATA opener
+    re.S | re.I)
+_CDATA_CLOSE = re.compile(r"\]\]>\s*$")
+
+# The rendering system's own trailer, appended after the comment text:
+#     ]]> Web file://prod-rend2k1201/Adlib/DocumentumConnector/Work/AD57... 4/4/2023
+# 124 records carry it as a SUFFIX, which is why a prefix-only rule left them.
+_RENDER_TRAILER = re.compile(
+    r"(?:\]\]>\s*)?Web\s+file://\S*(?:Adlib|DocumentumConnector)\S*.*$", re.S | re.I)
+
+# And 37 records are NOTHING BUT the receipt: objectId, name, town, phone, the
+# render path, a date. No comment at all. Those must end up empty so the
+# pipeline reports them as having no usable text, rather than embedding a
+# submission receipt as though it were somebody's argument.
 _TAG = re.compile(r"<[^>]{1,80}>")
 
 
@@ -72,6 +99,15 @@ def clean(text):
         # comment element if there is one
         body = re.search(r"<comment>(.*?)</comment>", text, re.S | re.I)
         text = body.group(1) if body else _TAG.sub(" ", text)
+    m = _FDMS_FLAT.search(text[:600])
+    if m:
+        text = text[m.end():]
+    text = _RENDER_TRAILER.sub(" ", text)
+    text = _CDATA_CLOSE.sub(" ", text)
+    # a receipt with no CDATA opener leaves the whole header behind; drop it
+    m = re.match(r"\s*(?:Page\s+\d+\s+of\s+\d+\s*[-–]\s*)?[0-9a-f]{16}\b.*", text, re.S)
+    if m and len(text) < 400:
+        text = ""
     text = strip_envelope(text)
     text = _EMAIL.sub(" ", text)
     text = _URL.sub(" ", text)

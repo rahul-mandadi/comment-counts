@@ -43,3 +43,65 @@ def test_a_quoted_email_in_the_MIDDLE_is_not_removed():
 def test_docket_boilerplate_goes_because_every_comment_shares_it():
     assert "EPA-HQ-OAR-2021-0317" not in clean.clean(
         "Docket ID No. EPA-HQ-OAR-2021-0317 I support the rule.")
+
+
+# Verbatim shapes from EPA-HQ-OAR-2021-0317. 859 of 3,487 records (24.6%) still
+# carried this receipt after the well-formed XML case was handled, because the
+# extractor flattens it into a line that no longer parses as XML.
+FLAT = ("Page 1 of 1 - 0900006485640465 - Jorge De Cecco - Ukiah CA United States "
+        "95482 7074631653 - - <![CDATA[ Dear administrators: You do not have to "
+        "cater to industry.")
+
+
+def test_flattened_fdms_receipt_is_stripped():
+    out = clean.clean(FLAT)
+    assert out.startswith("Dear administrators:")
+    assert "0900006485640465" not in out and "CDATA" not in out
+    assert "Ukiah" not in out and "7074631653" not in out
+
+
+def test_receipt_without_the_page_marker_is_still_stripped():
+    t = "09000064855ef831 - Joanna Nix - United States - - <![CDATA[ My name is Joanna."
+    assert clean.clean(t) == "My name is Joanna."
+
+
+def test_a_trailing_cdata_close_goes():
+    assert "]]>" not in clean.clean(FLAT + " ]]>")
+
+
+def test_a_sixteen_hex_string_in_PROSE_does_not_trigger_a_strip():
+    # the anchor must be the receipt shape, not any hex-looking token
+    t = "Dear EPA, our case number is 0123456789abcdef and we object to the rule."
+    assert clean.clean(t) == t
+
+
+def test_a_normal_comment_is_untouched_by_the_new_rule():
+    t = "Dear Administrator Regan, I support the proposed methane standards."
+    assert clean.clean(t) == t
+
+
+def test_render_trailer_is_stripped_from_the_end():
+    t = ("We absolutely must pass new regulations to stem methane! ]]> Web "
+         "file://prod-rend2k1201/Adlib/DocumentumConnector/Work/7131A2AB-522C-4B8... 4/4/2023")
+    out = clean.clean(t)
+    assert out == "We absolutely must pass new regulations to stem methane!"
+
+
+def test_a_record_that_is_ONLY_a_receipt_becomes_empty():
+    # 37 records on EPA-HQ-OAR-2021-0317 are nothing but this. Embedding them
+    # would put a submission receipt into the corpus as if it were an argument.
+    t = ("Page 1 of 1 - 0900006485634d9e - Scott Nelson - Bethel Island CA United "
+         "States 94511 - Web file://prod-rend2k1201/Adlib/DocumentumConnector/"
+         "Work/6619ECC0-ED1B-4EC... 4/4/2023")
+    assert clean.clean(t) == ""
+
+
+def test_a_receipt_WITH_a_comment_keeps_the_comment():
+    t = ("Page 1 of 1 - 0900006485640465 - Jorge De Cecco - Ukiah CA United States "
+         "95482 - - <![CDATA[ Dear administrators: do not cater to industry.")
+    assert clean.clean(t) == "Dear administrators: do not cater to industry."
+
+
+def test_the_word_web_in_ordinary_prose_survives():
+    t = "Dear EPA, the web of pipelines across our state leaks constantly."
+    assert clean.clean(t) == t

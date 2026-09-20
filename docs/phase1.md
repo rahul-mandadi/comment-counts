@@ -99,14 +99,18 @@ it as the precision of MinHash on federal dockets generally.
 Operating points chosen for **precision**, as declared in advance, and clustered with
 **complete linkage on both rungs** so the comparison is like for like.
 
+Figures below are on the FINAL cleaned text (2026-09-20), after the FDMS
+submission-receipt strip described under "A third receipt, and 38 records that
+were not comments".
+
 | rung | clusters | extra collapse | cost |
 |---|---|---|---|
-| exact hash (P=1.00) | 3,398 | 2.55% | seconds |
-| **near, MinHash @0.70 (P=1.00)** | **3,195** | **8.37%** | ~30s CPU, no model |
-| **semantic @0.97 (P=1.00)** | **3,169** | **9.12%** | model download + ~45s encode |
+| exact hash (P=1.00) | 3,334 | 3.33% | seconds |
+| **near, MinHash @0.70 (P=1.00)** | **3,099** | **10.15%** | ~30s CPU, no model |
+| **semantic @0.97 (P=1.00)** | **3,120** | **9.54%** | model download + ~45s encode |
 
-**At matched precision the expensive rung buys 0.75 percentage points.** 26 clusters out of
-3,487. Embeddings, a downloaded model and an encoding pass beat forty lines of MinHash by an
+**At matched precision the expensive rung buys nothing at all.** On the final cleaned text
+MinHash reaches 10.15% and embeddings 9.54%, so the cheap rung is now marginally *ahead*. Embeddings, a downloaded model and an encoding pass beat forty lines of MinHash by an
 amount that would not survive a different random seed.
 
 Stated against the kill condition as it was actually written — *"semantic collapses by
@@ -120,12 +124,12 @@ this docket, and exact hashing captures about a quarter of it.*
 
 | | |
 |---|---|
-| submissions | 836,351 |
-| records (what regulations.gov shows) | 3,487 |
-| clusters (precision-selected) | 3,169 |
-| **collapse the government already did** | **239.85x** |
-| **collapse this project adds** | **1.10x** |
-| total | 263.92x |
+| submissions | 836,313 |
+| records with usable text | 3,449 |
+| clusters (precision-selected) | 3,120 |
+| **collapse the government already did** | **242.48x** |
+| **collapse this project adds** | **1.11x** |
+| total | 268.05x |
 | **share of the whole reduction already official** | **99.96%** |
 
 At the F1-optimal point (semantic 0.90, precision 0.76) the project's own collapse rises to
@@ -243,6 +247,46 @@ exact-duplicate rate that the official count reports as zero.
    99.47% identical. This is not a bug in the exact rung, which is meant to be brittle -- it
    is a worked demonstration of why the ladder needs a second rung, and the near rung merges
    them correctly.
+
+## A third receipt, and 38 records that were not comments
+
+After the email envelope was stripped, **859 of 3,487 records (24.6%) still opened with a
+different receipt** -- the docket system's own render header, flattened by the PDF extractor
+until it no longer parsed as XML:
+
+    Page 1 of 1 - 0900006485640465 - Jorge De Cecco - Ukiah CA United States 95482
+    7074631653 - - <![CDATA[ Dear administrators: You do not have to cater to industry.
+
+Handling it exposed two more shapes. **124 records** carry the same system's trailer at the
+*end* (`]]> Web file://prod-rend2k1201/Adlib/DocumentumConnector/...`), which a prefix rule
+cannot reach. And **38 records contain nothing but the receipt** -- objectId, name, town,
+phone, render path, date, and no comment at all. Those were being embedded as documents.
+They now resolve to empty and are reported as having no usable text, which is what they are.
+
+**Effect on the result: small, and in the direction that matters.**
+
+| | before the fix | after |
+|---|---|---|
+| exact | 2.55% | **3.33%** |
+| near @0.70 | 9.32% | **10.15%** |
+| semantic @0.97 | 9.12% | **9.54%** |
+| margin over official | 1.10x | 1.11x |
+
+Every conclusion survives, which is the useful part: the headline was not resting on
+uncleaned text. **One thing did flip.** Before the fix, embeddings edged MinHash 9.12% to
+8.37%. On clean text MinHash reaches 10.15% against embeddings' 9.54%, so at matched
+precision **the cheap rung is now ahead**. The 0.75-point advantage previously claimed for
+embeddings was an artifact of receipt text that the two rungs handled differently.
+
+Precision and recall on the final text, same 100 machine labels (pair identity is by record
+index and survived the text change, so no relabelling was needed):
+
+| rung | precision | recall | F1 |
+|---|---|---|---|
+| exact | 1.000 | 0.292 | 0.452 |
+| near @0.70 | **1.000** | **0.438** | 0.609 |
+| semantic @0.90 | 0.804 | 0.938 | **0.865** |
+| semantic @0.97 | **1.000** | **0.479** | 0.648 |
 
 ## What this does not establish
 
