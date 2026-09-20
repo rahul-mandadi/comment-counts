@@ -139,8 +139,11 @@ output "next_steps" {
     export COMMENT_COUNTS_BUCKET=${aws_s3_bucket.corpus.id}
     export BEDROCK_BATCH_ROLE_ARN=${aws_iam_role.bedrock_batch.arn}
 
-    Model access for Titan embeddings must be enabled BY HAND in the console
-    once per account: Bedrock > Model access > Amazon Titan Text Embeddings V2.
-    Terraform cannot do it and the batch job fails with AccessDenied until it is.
+    Verified 2026-09-20: Titan Text Embeddings V2 and Cohere Embed V4 both
+    invoke with no console model-access step on a new account. If a future
+    model does need one it is Bedrock > Model access, and the failure mode is
+    a bare AccessDenied that does not mention model access.
+
+    REGION MATTERS. us-east-1 carries 15 embedding models; us-east-2 carries 2.
   EOT
 }

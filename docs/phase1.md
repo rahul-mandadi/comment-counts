@@ -139,6 +139,47 @@ What is left after it is very nearly all distinct.
 has two official counts, **836,351 and 3,578**, they differ by 234x, both are correct, both
 are published, and nothing on the page says which one a reader is looking at.
 
+## The incumbent is better than it looks, verified two ways
+
+Three records on this docket are **bundles**: one PDF containing thousands of copies of a
+form letter, one per signatory. The largest is **206,968,613 characters** in a single comment
+record, which is how a 3,487-record docket produces a mean document length 77x its median.
+
+I counted the copies independently, by finding how many times each document's own opening
+paragraph repeats inside itself, with no reference to any metadata:
+
+| record | chars | repeats I counted | official `duplicateComments` |
+|---|---|---|---|
+| EPA-HQ-OAR-2021-0317-2477 | 206,968,613 | **61,999** | **61,999** |
+| EPA-HQ-OAR-2021-0317-2496 | 138,147,331 | **41,434** | **41,434** |
+| EPA-HQ-OAR-2021-0317-2469 | 352,200 | 129 | 261 |
+
+**Two of the three agree exactly.** regulations.gov is not estimating; it knows how many
+letters are inside a bundled PDF attachment it received as one file. The third differs
+because my repeat probe keys on one paragraph and that bundle mixes two letter variants,
+which is a limitation of my probe rather than of their count.
+
+This matters because the project's original premise was that bundled campaign submissions
+would be invisible to the official count. They are not. It is the sharpest available evidence
+that the incumbent is accurate, and it independently reinforces the margin result: there is
+very little for a deduplication pipeline to find that the government has not already found.
+
+## A truncation bound that has to be stated
+
+`embed.chunk` caps each document at 24 chunks, roughly 4,300 words. On this docket that means
+**2.9% of the corpus text is actually embedded** (10,542,252 characters of 367,168,881).
+
+The cap is doing something reasonable and something questionable at once. Reasonable: the
+bundles above are 200 MB of one repeated letter, and embedding all of it would be pure waste.
+Questionable: a 30-page industry comment is compared on its opening 4,300 words, so two long
+submissions that differ only after page eight are indistinguishable to rung 3.
+
+Since the long documents are overwhelmingly the substantive industry and NGO comments, and the
+short ones are the campaign letters this project is trying to separate, **the truncation is
+concentrated exactly on the population where distinctness matters most.** It did not affect
+the headline, because the collapse is driven by short campaign letters that fit inside the cap
+comfortably. It would affect any future claim about the long tail.
+
 ## What this does not establish
 
 - It does not determine whether any comment is fraudulent. Distinctness is not authenticity.

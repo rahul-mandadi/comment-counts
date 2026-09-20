@@ -81,10 +81,21 @@ export COMMENT_COUNTS_BUCKET=...
 export BEDROCK_BATCH_ROLE_ARN=...
 ```
 
-**One step Terraform cannot do.** Bedrock model access is granted per account
-by hand: **Bedrock console > Model access > Amazon Titan Text Embeddings V2 >
-Enable**. Until that is done every batch job fails with `AccessDenied`, and the
-error does not say model access is the reason.
+**Model access needed no console step -- verified 2026-09-20.** On a new account
+both `amazon.titan-embed-text-v2:0` and `cohere.embed-v4:0` invoked successfully
+straight away. This document previously said the console grant was mandatory;
+that was wrong. If a future model does require it, it is Bedrock > Model access,
+and the failure mode is a bare `AccessDenied` that never mentions model access.
+
+**Region is what actually bites.** Measured the same day:
+
+| region | embedding models available |
+|---|---|
+| us-east-1 (N. Virginia) | **15** |
+| us-east-2 (Ohio) | **2** |
+
+An empty Bedrock model catalog is almost always the region picker, or the new
+console's project-scoped catalog view, rather than a missing model.
 
 ## What gets created
 
@@ -160,3 +171,39 @@ aws configure                          # writes ~/.aws/credentials, outside the 
 
 A key that has been pasted into a transcript should be regenerated rather than
 reused, however low the consequence looks. Both of these are cheap to rotate.
+
+## Measured limits and real cost, 2026-09-20
+
+Batch inference **does** cover Titan Text Embeddings V2. An earlier reading of a
+truncated quota list suggested otherwise and was wrong; the full list is clear.
+
+| quota (us-east-1) | value |
+|---|---|
+| records per batch inference job, Titan V2 | 100,000 |
+| minimum records per batch job | 100 |
+| batch input file size | 1 GB |
+| on-demand, Titan V2 | 6,000 req/min, 300,000 tokens/min |
+| on-demand, Cohere Embed V4 | 1,000 req/min, 150,000 tokens/min, **8.1M tokens/day** |
+
+**Cohere Embed V4 cannot do the full corpus.** Its daily token cap makes a
+500k-document run take years. It is still useful as a third comparison arm on
+one docket, which is all the experiment needs.
+
+**Cost, computed rather than guessed:**
+
+| | |
+|---|---|
+| corpus | 502,579 records |
+| tokens after the `MAX_CHUNKS` cap | ~380M |
+| Titan V2 at ~$0.02 per 1M tokens (verify) | **~$7.60** |
+| on-demand wall time at 300k tok/min | ~21 hours |
+| batch jobs needed at 100k records each | 6 |
+
+**A wrong estimate worth keeping, because the error is instructive.** Scaling the
+pilot docket's text volume by record count gave **$265** and 735 hours. That is
+meaningless: attachment rates across these six dockets range from 0.5% to 85.4%,
+so records are not comparable units of text. Worse, the pilot docket's *mean*
+document is 77x its *median*, because three records are bundled PDFs holding tens
+of thousands of form letters, one of them 206 MB. Any per-record extrapolation
+across dockets inherits that skew. The honest figure comes from the chunk cap,
+which is what the pipeline actually sends.
