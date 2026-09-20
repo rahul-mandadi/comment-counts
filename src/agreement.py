@@ -38,6 +38,29 @@ def load():
     return m, json.load(open(hp))
 
 
+def bootstrap_kappa_ci(a, b, n=2000, seed=3):
+    """Percentile CI on kappa by resampling pairs.
+
+    Reported because kappa on a sample this size is not a point fact. At 50
+    pairs the interval is roughly +/-0.2 wide, which is the honest cost of not
+    hand-labelling thousands, and quoting kappa without it would overstate how
+    settled the judge's reliability is.
+    """
+    import random
+    rng = random.Random(seed)
+    n_pairs = len(a)
+    if n_pairs < 5:
+        return None
+    vals = []
+    for _ in range(n):
+        idx = [rng.randrange(n_pairs) for _ in range(n_pairs)]
+        ka = cohens_kappa([a[i] for i in idx], [b[i] for i in idx])
+        if ka is not None:
+            vals.append(ka)
+    vals.sort()
+    return [round(vals[int(0.025 * len(vals))], 3), round(vals[int(0.975 * len(vals))], 3)]
+
+
 def report():
     machine, human = load()
     shared = sorted(set(machine) & set(human), key=int)
@@ -61,6 +84,7 @@ def report():
         "kappa_merge_vs_keep": round(cohens_kappa(mb, hb), 4) if shared else None,
         "machine_distribution": dict(collections.Counter(mv)),
         "human_distribution": dict(collections.Counter(hv)),
+        "kappa_merge_vs_keep_95ci": bootstrap_kappa_ci(mb, hb),
         "disagreements": disagreements,
     }
 
