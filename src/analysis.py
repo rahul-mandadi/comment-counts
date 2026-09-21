@@ -230,36 +230,50 @@ def scalable_clusters(vecs, threshold, max_component=4000, block=512,
                  "oversized_components": oversized}
 
 
-def minhash_complete_clusters(sigs, threshold, max_component=4000, block=512,
+def _agree_block(sigs, s, e):
+    """Fraction of matching permutations between rows [s:e) and all rows.
+
+    Accumulates one permutation at a time. The obvious vectorisation,
+    `sigs[s:e, None, :] == sigs[None, :, :]`, materialises a
+    (block x n x num_perm) boolean array before reducing it -- 11.5 GB per
+    block at FDA-2021-N-1349's 175,285 documents, which killed a run. Summing
+    per permutation holds one (block x n) array instead, so memory is flat in
+    num_perm.
+    """
+    import numpy as np
+    n = sigs.shape[0]
+    acc = np.zeros((e - s, n), dtype=np.uint8)      # 128 perms fits a uint8
+    for p in range(sigs.shape[1]):
+        acc += (sigs[s:e, p][:, None] == sigs[None, :, p])
+    return acc.astype(np.float32) / sigs.shape[1]
+
+
+def minhash_complete_clusters(sigs, threshold, max_component=4000, block=256,
                               texts=None):
     """Complete-linkage clustering on MinHash signatures.
 
     Exists so the near rung is clustered the same way as the semantic rung.
     Phase 1 reports its headline comparison as complete linkage on both, and
     `run_docket` was using connected components for near, so the per-docket
-    Phase 2 output was not reproducing the comparison it cites. The difference
-    is 7.94% against 7.34% on EPA-HQ-OAR-2021-0317 -- small there, unbounded in
-    campaign size, and the campaign-heavy dockets are the point of Phase 2.
+    Phase 2 output was not reproducing the comparison it cites.
 
-    Signature agreement IS the Jaccard estimate, so the "vectors" here are the
-    signatures and similarity is the fraction of matching permutations.
+    Signature agreement IS the Jaccard estimate, so similarity here is the
+    fraction of matching permutations. Memory discipline mirrors
+    `scalable_clusters`: stream into union-find, never build a pair list, and
+    collapse exact-duplicate texts to one representative inside an oversized
+    component.
     """
+    import collections
+
     import numpy as np
 
-    n = sigs.shape[0]
-
-    class _SigView:
-        """Adapts signature agreement to the cosine-shaped interface."""
-        shape = (n, sigs.shape[1])
-
-        def __matmul__(self, other):
-            raise NotImplementedError
-
     import dedup
+
+    n = sigs.shape[0]
     u = dedup.Union(n)
     for s in range(0, n, block):
         e = min(s + block, n)
-        agree = (sigs[s:e, None, :] == sigs[None, :, :]).mean(axis=2)
+        agree = _agree_block(sigs, s, e)
         for a in range(e - s):
             i = s + a
             js = np.nonzero(agree[a, i + 1:] >= threshold)[0]
@@ -274,24 +288,49 @@ def minhash_complete_clusters(sigs, threshold, max_component=4000, block=512,
                     roots.discard(r)
         del agree
 
-    out = []
+    from sklearn.cluster import AgglomerativeClustering
+    out, oversized = [], []
     for c in u.groups():
         if len(c) <= 1:
             out.append(c)
             continue
-        sub = sigs[c]
-        d = 1.0 - (sub[:, None, :] == sub[None, :, :]).mean(axis=2)
-        np.fill_diagonal(d, 0.0)
-        if len(c) > max_component:
-            out.append(c)          # reported by the caller, not silently split
+        members = c
+        if len(members) > max_component and texts is not None:
+            byhash = collections.defaultdict(list)
+            for i in members:
+                byhash[dedup.exact_key(texts[i])].append(i)
+            reps = [g[0] for g in byhash.values()]
+            if len(reps) <= max_component:
+                sub = sigs[reps]
+                d = 1.0 - _agree_block(sub, 0, len(reps))
+                np.fill_diagonal(d, 0.0)
+                lab = AgglomerativeClustering(
+                    n_clusters=None, metric="precomputed", linkage="complete",
+                    distance_threshold=1.0 - threshold).fit_predict(d.astype(np.float64))
+                g = {}
+                for pos, l in enumerate(lab):
+                    g.setdefault(int(l), []).append(reps[pos])
+                for grp in g.values():
+                    expanded = []
+                    for r in grp:
+                        expanded.extend(byhash[dedup.exact_key(texts[r])])
+                    out.append(expanded)
+                continue
+            oversized.append(len(members))
+            out.append(members)
             continue
-        from sklearn.cluster import AgglomerativeClustering
-        lab = AgglomerativeClustering(n_clusters=None, metric="precomputed",
-                                      linkage="complete",
-                                      distance_threshold=1.0 - threshold
-                                      ).fit_predict(d.astype(np.float64))
+        if len(members) > max_component:
+            oversized.append(len(members))
+            out.append(members)
+            continue
+        sub = sigs[members]
+        d = 1.0 - _agree_block(sub, 0, len(members))
+        np.fill_diagonal(d, 0.0)
+        lab = AgglomerativeClustering(
+            n_clusters=None, metric="precomputed", linkage="complete",
+            distance_threshold=1.0 - threshold).fit_predict(d.astype(np.float64))
         g = {}
         for pos, l in enumerate(lab):
-            g.setdefault(int(l), []).append(c[pos])
+            g.setdefault(int(l), []).append(members[pos])
         out.extend(g.values())
     return out

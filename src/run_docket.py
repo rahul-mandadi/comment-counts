@@ -27,10 +27,13 @@ import embed
 
 # selected on human labels, 2026-09-20, at precision 1.00
 COSINE = 0.9641
-# 101/128 exactly. With num_perm=128 the estimate takes 129 values, and
-# 0.7891 sits 3.75e-5 ABOVE 101/128, so every pair landing exactly on the
-# selected threshold was excluded and the rung really ran at 102/128.
-JACCARD = 101 / 128
+# 80/128 exactly. 0.7891 was the top of a plateau the first label sample could
+# not constrain: no labelled pair had a Jaccard between 0.3438 and 0.7891, so
+# every threshold in that 0.445-wide window scored precision 1.00 and the
+# selection rule returned the end that minimised collapse. A second sample of
+# 40 pairs stratified over Jaccard, 11 of them labelled by a human, narrowed
+# the admissible window to 0.0156 and put the threshold here.
+JACCARD = 80 / 128
 
 
 def run(docket, store=None, save_vectors=True):
@@ -90,7 +93,7 @@ def run(docket, store=None, save_vectors=True):
                                                          meta["oversized_components"])),
         "margin": analysis.margin_over_official(kr, sem),
         "thresholds": {"cosine": COSINE, "jaccard": JACCARD,
-                       "selected_on": "31 blind human labels, EPA-HQ-OAR-2021-0317"},
+                       "selected_on": "41 blind human labels on EPA-HQ-OAR-2021-0317, pooled from a cosine-stratified and a Jaccard-stratified sample"},
         "seconds": round(time.time() - t0, 1),
     }
     if store is not None:

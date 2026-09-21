@@ -132,3 +132,26 @@ def test_identical_docs_are_never_split_by_the_representative_step():
     texts = ["same"] * 300
     cl, _ = analysis.scalable_clusters(v, 0.99, max_component=10, texts=texts)
     assert len(cl) == 1 and len(cl[0]) == 300
+
+
+def test_agree_block_matches_the_naive_broadcast():
+    """The memory fix must not change a single similarity."""
+    import numpy as np, analysis
+    rng = np.random.default_rng(9)
+    sigs = rng.integers(0, 5, size=(40, 16), dtype=np.uint64)
+    naive = (sigs[:, None, :] == sigs[None, :, :]).mean(axis=2)
+    got = analysis._agree_block(sigs, 0, 40)
+    assert np.allclose(naive, got, atol=1e-6)
+
+
+def test_minhash_complete_clustering_is_unchanged_by_block_size():
+    import numpy as np, analysis, dedup
+    mh = dedup.MinHasher(num_perm=64, seed=8)
+    texts = (["alpha beta gamma delta epsilon zeta eta theta iota"] * 12
+             + ["alpha beta gamma delta epsilon zeta eta theta kappa"] * 5
+             + ["wholly different words appear in this one entirely"] * 4)
+    sigs = np.array([mh.signature(dedup.shingles(t, k=3)) for t in texts])
+    a = analysis.minhash_complete_clusters(sigs, 0.6, block=3, texts=texts)
+    b = analysis.minhash_complete_clusters(sigs, 0.6, block=1000, texts=texts)
+    norm = lambda cs: sorted(sorted(c) for c in cs)
+    assert norm(a) == norm(b)
