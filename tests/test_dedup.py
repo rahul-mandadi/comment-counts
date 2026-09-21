@@ -81,3 +81,54 @@ def test_complete_linkage_refuses_to_chain():
 
     complete = analysis.complete_link_clusters(v, thr)
     assert sorted(len(c) for c in complete) == [1, 2], complete
+
+
+def test_scalable_clustering_matches_the_dense_version():
+    """The memory optimisation must not change the answer."""
+    import numpy as np, analysis
+    rng = np.random.default_rng(11)
+    # three tight groups plus noise, so there is real structure to preserve
+    centres = rng.normal(size=(3, 12))
+    v = np.vstack([c + 0.02 * rng.normal(size=(15, 12)) for c in centres]
+                  + [rng.normal(size=(10, 12))]).astype(np.float32)
+    v /= np.linalg.norm(v, axis=1, keepdims=True)
+    thr = 0.95
+    dense = analysis.complete_link_clusters(v, thr)
+    sparse, meta = analysis.scalable_clusters(v, thr, max_component=1000)
+    norm = lambda cs: sorted(sorted(c) for c in cs)
+    assert norm(dense) == norm(sparse), (len(dense), len(sparse))
+    assert meta["oversized_components"] == []
+
+
+def test_scalable_clustering_reports_an_oversized_component_instead_of_approximating():
+    import numpy as np, analysis
+    v = np.ones((30, 4), dtype=np.float32)
+    v /= np.linalg.norm(v, axis=1, keepdims=True)   # all identical -> one component
+    _cl, meta = analysis.scalable_clusters(v, 0.9, max_component=10)
+    assert meta["oversized_components"] == [30]
+
+
+def test_clustering_survives_a_mass_campaign_without_materialising_pairs():
+    """The defect that killed a run: 27,807 identical docs on FWS would have
+    emitted 386 million pairs. Memory must stay flat in the campaign size."""
+    import numpy as np, analysis
+    rng = np.random.default_rng(3)
+    big = np.tile(np.array([[1.0, 0.0, 0.0]], dtype=np.float32), (800, 1))
+    other = np.array([[0.0, 1.0, 0.0]] * 5, dtype=np.float32)
+    v = np.vstack([big, other])
+    v /= np.linalg.norm(v, axis=1, keepdims=True)
+    texts = ["identical campaign letter"] * 800 + [f"unique {i}" for i in range(5)]
+    cl, meta = analysis.scalable_clusters(v, 0.95, max_component=50, texts=texts)
+    sizes = sorted(len(c) for c in cl)
+    assert sizes[-1] == 800, sizes          # the campaign stays one cluster
+    assert meta["oversized_components"] == []   # collapsed by hash, not abandoned
+    assert sum(len(c) for c in cl) == 805       # nothing lost
+
+
+def test_identical_docs_are_never_split_by_the_representative_step():
+    import numpy as np, analysis
+    v = np.ones((300, 3), dtype=np.float32)
+    v /= np.linalg.norm(v, axis=1, keepdims=True)
+    texts = ["same"] * 300
+    cl, _ = analysis.scalable_clusters(v, 0.99, max_component=10, texts=texts)
+    assert len(cl) == 1 and len(cl[0]) == 300

@@ -132,3 +132,84 @@ def complete_link_clusters(vecs, threshold, index_subset=None):
     for pos, lab in enumerate(labels):
         out.setdefault(int(lab), []).append(idx[pos])
     return list(out.values())
+
+
+def scalable_clusters(vecs, threshold, max_component=4000, block=512,
+                      texts=None, progress=None):
+    """Complete-linkage clustering in bounded memory, at campaign scale.
+
+    Two separate blow-ups have to be avoided, and the second one killed a run.
+
+    1. **The distance matrix.** Complete linkage on 238,944 documents wants a
+       238,944^2 float64 matrix: 456 GB. Avoided because a complete-link cluster
+       is always a subset of a single-link component, so components can be found
+       first and exact complete linkage run inside each one.
+
+    2. **The pair list.** FWS-HQ-ES-2018-0006 contains a campaign of 27,807
+       byte-identical documents. Every pair of them clears any threshold, which
+       is 386,600,721 pairs, roughly 27.8 GB as Python tuples. The first version
+       materialised that list and the OS killed the process with no traceback.
+       `lsh_candidate_pairs` has carried a bucket cap for this since it was
+       written; the cosine path did not, which is the kind of gap that only
+       shows up on a docket big enough to expose it.
+
+       Fixed by never building the list: the similarity blocks feed union-find
+       directly, so memory is O(n) in documents rather than O(n^2) in pairs.
+
+    Inside an oversized component, exact duplicates are collapsed to one
+    representative BEFORE complete linkage runs. That is not an approximation --
+    identical documents cannot be separated by any threshold -- and it turns the
+    27,807-document campaign into a single representative.
+    """
+    import collections
+
+    import numpy as np
+
+    import dedup
+
+    n = vecs.shape[0]
+    u = dedup.Union(n)
+    edges = 0
+    for s in range(0, n, block):
+        e = min(s + block, n)
+        sims = vecs[s:e] @ vecs.T
+        rows_i, cols_j = np.nonzero(sims >= threshold)
+        for a, b in zip(rows_i, cols_j):
+            i = s + int(a); j = int(b)
+            if j > i:
+                u.union(i, j)
+                edges += 1
+        del sims, rows_i, cols_j
+        if progress:
+            progress(e, n)
+    comps = u.groups()
+
+    out, oversized = [], []
+    for c in comps:
+        if len(c) == 1:
+            out.append(c)
+            continue
+        members = c
+        if len(members) > max_component and texts is not None:
+            # identical documents cannot be split by any threshold, so collapse
+            # them to one representative first; exact, not approximate
+            byhash = collections.defaultdict(list)
+            for i in members:
+                byhash[dedup.exact_key(texts[i])].append(i)
+            reps = [g[0] for g in byhash.values()]
+            if len(reps) <= max_component:
+                for sub in complete_link_clusters(vecs, threshold, index_subset=reps):
+                    expanded = []
+                    for r in sub:
+                        expanded.extend(byhash[dedup.exact_key(texts[r])])
+                    out.append(expanded)
+                continue
+            oversized.append(len(members))
+            out.append(members)
+        elif len(members) > max_component:
+            oversized.append(len(members))
+            out.append(members)
+        else:
+            out.extend(complete_link_clusters(vecs, threshold, index_subset=members))
+    return out, {"edges": edges, "components": len(comps),
+                 "oversized_components": oversized}
