@@ -358,6 +358,46 @@ the precision-1.0 boundary. So the machine labels were fit for the purpose they 
 -- and that is now evidence rather than assumption, which it could not have been without
 labelling blind first.
 
+### The 0.3-point result was about MiniLM, not about embeddings (Bedrock, 2026-09-21)
+
+The standing objection to "embeddings buy almost nothing" was that it rested on a
+22-million-parameter model with a 256-token window. Titan Text Embeddings V2 on Bedrock
+settles it. Two arms, because Titan differs from MiniLM in two ways at once and one variable
+at a time is the only way this answers anything:
+
+- **matched** -- chunked to 180 words and mean-pooled exactly as MiniLM is, isolating **model
+  capacity**
+- **native** -- the whole document in Titan's own 8,192-token window, isolating **context
+  length**
+
+Thresholds re-selected per arm on the same 41 human labels, because a cosine value is not
+transferable between embedding models.
+
+| rung | threshold | admissible width | collapse |
+|---|---|---|---|
+| exact hash | - | - | 3.33% |
+| MinHash | 0.6250 | 0.0156 | 10.90% |
+| MiniLM, 384d | 0.9641 | 0.0010 | 11.22% |
+| **Titan native, 1024d** | 0.9547 | 0.0161 | **13.19%** |
+| **Titan matched, 1024d** | 0.9255 | 0.0051 | **16.67%** |
+
+**Model capacity is real and was being mistaken for a property of embeddings.** At identical
+chunking, Titan finds **16.67%** where MiniLM finds 11.22% -- half again as much, on the same
+documents at the same precision. Against MinHash's 10.90%, embeddings go from buying 0.3
+points to buying **2.3 points (native) or 5.8 points (matched)**.
+
+So the earlier conclusion needs restating rather than retracting: *a small embedding model
+buys almost nothing over MinHash on this corpus; a production embedding model buys a fifth to
+a half more collapse.* Kill condition 2 does not fire on either arm.
+
+**The native arm is the surprise, and it goes the other way.** Giving Titan the whole document
+produced **less** collapse than chunking it (13.19% against 16.67%). Mean-pooling chunks
+averages away document-specific detail and makes documents look more alike, so part of the
+matched arm's advantage is a chunking artifact rather than model capacity. The native number
+is the more conservative one and the one to quote.
+
+**Cost:** 3,449 documents, two arms, 52s and 125s of wall clock, well under a dollar.
+
 ### RESOLVED 2026-09-21: both rungs constrained, and the expensive one buys 0.3 points
 
 11 more human labels, drawn from a sample stratified over **Jaccard** rather than cosine,
@@ -372,7 +412,8 @@ closed the plateau. The admissible window for the MinHash threshold went from **
 
 **Embeddings buy 0.32 percentage points over forty lines of MinHash** -- 2.9% relative, for a
 downloaded model, an encoding pass and 384-dimensional vectors. Both beat exact hashing by
-more than 3x.
+more than 3x. **This holds only for MiniLM; see the Bedrock section above, where a production
+model takes the gap to 2.3-5.8 points.**
 
 That is kill condition 2 in substance, though not in its literal wording: the condition is
 written against *exact*, which semantic comfortably beats. Against the rung immediately below,
