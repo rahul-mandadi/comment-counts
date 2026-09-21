@@ -358,6 +358,40 @@ the precision-1.0 boundary. So the machine labels were fit for the purpose they 
 -- and that is now evidence rather than assumption, which it could not have been without
 labelling blind first.
 
+### RESOLVED 2026-09-21: both rungs constrained, and the expensive one buys 0.3 points
+
+11 more human labels, drawn from a sample stratified over **Jaccard** rather than cosine,
+closed the plateau. The admissible window for the MinHash threshold went from **0.445 wide to
+0.0156**, and with both rungs finally constrained the comparison can be made:
+
+| rung | threshold | admissible width | collapse |
+|---|---|---|---|
+| exact hash | - | - | 3.33% |
+| **MinHash** | **0.625** | 0.0156 | **10.90%** |
+| **embeddings** | **0.9641** | 0.0010 | **11.22%** |
+
+**Embeddings buy 0.32 percentage points over forty lines of MinHash** -- 2.9% relative, for a
+downloaded model, an encoding pass and 384-dimensional vectors. Both beat exact hashing by
+more than 3x.
+
+That is kill condition 2 in substance, though not in its literal wording: the condition is
+written against *exact*, which semantic comfortably beats. Against the rung immediately below,
+the expensive rung bought nothing worth its cost on this docket.
+
+**This document has now answered the same question four times and only the last answer is
+sound.** The first three all had the same defect in different clothes:
+
+| version | claim | why it was wrong |
+|---|---|---|
+| 1 | embeddings +0.75pp | thresholds were round numbers picked before any labels existed |
+| 2 | MinHash +0.61pp | same, after a cleaning change moved both |
+| 3 | embeddings +3.88pp | cosine constrained to 0.001, Jaccard unconstrained over 0.445 |
+| **4** | **embeddings +0.32pp** | **both rungs constrained by labels; this one stands** |
+
+The lesson is not that the arithmetic was ever wrong -- it was right every time. It is that a
+similarity threshold is not a number you can choose on grounds of tidiness, and a comparison
+between two methods is only a comparison when the labels bind both.
+
 ### RETRACTED: the ladder rungs cannot be compared on this label set
 
 **This section previously claimed embeddings collapse 53% more than MinHash at equal
