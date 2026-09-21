@@ -13,6 +13,7 @@ import concurrent.futures as cf
 import json
 import os
 import sys
+import time
 import urllib.parse
 import urllib.request
 
@@ -35,10 +36,9 @@ def _fetch(key, retries=4):
             req = urllib.request.Request(url, headers={"Accept": "*/*"})
             with urllib.request.urlopen(req, timeout=60) as r:
                 return r.read()
-        except Exception:
+        except (urllib.error.URLError, urllib.error.HTTPError, OSError):
             if attempt == retries - 1:
                 raise
-            import time
             time.sleep(1.0 * (attempt + 1))
 
 

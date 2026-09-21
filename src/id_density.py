@@ -16,7 +16,6 @@ probe independently finds 474 holes. Agreement to 0.4% on a case where the
 truth was known separately is why the proxy is trusted on the dockets where it
 is not.
 """
-import re
 import sys
 
 import dockets

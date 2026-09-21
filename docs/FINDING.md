@@ -41,14 +41,14 @@ bundle, the docket would read 1.
 record, so no submission count is published and a reader cannot tell whether duplication was
 measured and found absent or never measured.
 
-## 2. How robust is the headline?
+## 2. How much does the headline move under different choices?
 
 The one unstated choice is *which text represents a comment* (body, or the attachment it
 points to). Recomputed under six alternatives:
 
 | variant | redundant copies | vs published |
 |---|---|---|
-| **published** (assembled text, NFKC + lower + whitespace) | **306,854** | — |
+| **published** (assembled text, NFKC + lower + whitespace) | **306,854** | baseline |
 | no lowercasing | 306,675 | −0.06% |
 | no NFKC | 306,854 | 0 |
 | no whitespace collapse | 306,854 | 0 |
@@ -56,14 +56,14 @@ points to). Recomputed under six alternatives:
 | strip punctuation too | 307,511 | +0.21% |
 | raw comment body instead of assembled text | 311,658 | +1.57% |
 
-**Range 306,675 – 311,658. "64% of records" holds under every variant.** NFKC and whitespace
+**Range 306,675 to 311,658. "64% of records" holds under every variant.** NFKC and whitespace
 collapse are no-ops because `assemble.normalize_space` already applied both upstream.
 
 The duplicates are not trivially short text: excess copies are ≥200 characters for 99.9% of
-FWS, 99.6% of FDA, 95.4% of ED and 99.0% of OSHA. The largest clusters are 700–2,100-character
+FWS, 99.6% of FDA, 95.4% of ED and 99.0% of OSHA. The largest clusters are 700 to 2,100 character
 form letters. "Many people independently typed *I oppose this*" is not the explanation.
 
-## 3. Agency response does not scale with volume — weakly evidenced
+## 3. Agency response does not scale with volume (weakly evidenced)
 
 | docket | submissions | distinct arguments | response windows | per argument | response **density** |
 |---|---|---|---|---|---|
@@ -93,7 +93,7 @@ wrote **303 pages**. But this claim is **weak and is labelled as such**:
 | Published counts depend on filing mode, not on deduplication policy | the above, on 6 dockets / 5 agencies | **strong** |
 | ED and OSHA do not publish a submission count | the raw field is 0 on every record | **unconditional** |
 | The largest FWS clusters are campaigns | 4 clusters, **12 documents actually read**, one labeller (the author), one docket | **moderate** |
-| ~2,885 distinct arguments on FWS | semantic clustering at a human-constrained threshold; moves 5.25%→23.22% on one label flip | **conditional** |
+| ~2,885 distinct arguments on FWS | semantic clustering at a human-constrained threshold; moves 5.25% to 23.22% on one label flip | **conditional** |
 | Response effort is flat in volume | heuristic detector, n=5, p=0.87, reverses under another measure | **weak** |
 
 ## 5. What this does not do

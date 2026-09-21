@@ -1,5 +1,5 @@
 {
-  "labeller": "claude-opus-5, machine judge",
+  "labeller": "LLM judge (claude-opus-5)",
   "labelled": "2026-09-20",
   "docket": "EPA-HQ-OAR-2021-0317",
   "basis": "cleaned text (envelope stripped), sample seed 11, cleaned embeddings",

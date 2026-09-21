@@ -30,7 +30,7 @@ rest on the partial docket.
 
 ## Two data defects found on the way, one of which reversed my own prediction
 
-**1. "See attached file(s)" — 263 records.** The placeholder detector was written from
+**1. "See attached file(s)", 263 records.** The placeholder detector was written from
 imagination first, then checked against the corpus's most frequent short bodies. It missed
 the docket's **second most common body**, 263 records, because the regex had no `(s)`. Also
 missed `please post attached comment` and `Please see the uploaded document`. Pinned by
@@ -42,7 +42,7 @@ scanning clerk's name, attachment filenames. pdfminer extracts it because it is 
 
 I predicted, in the module's own docstring, that shared boilerplate would inflate similarity
 and therefore inflate the collapse. **That was wrong, and the measurement is the interesting
-part.** Stripping the envelope moved semantic collapse from 25.09% to **27.79%** — it went
+part.** Stripping the envelope moved semantic collapse from 25.09% to **27.79%**. It went
 *up*. The envelope is not mostly shared: per record it carries a unique email address, a
 unique timestamp and a unique name, and that noise was pushing genuinely identical campaign
 letters apart. The contamination was **suppressing** the measured collapse, not inflating it.
@@ -51,7 +51,7 @@ letters apart. The contamination was **suppressing** the measured collapse, not 
 
 Connected components over a similarity graph is **single linkage**: one edge merges. On the
 semantic rung it chains badly. Measured at cosine 0.90, the largest component holds 944
-records and has **diameter 14** — a path of fourteen hops, so the documents at its ends are
+records and has **diameter 14**, a path of fourteen hops, so the documents at its ends are
 not similar to each other at all. At 0.85 it swallows 1,781 records and 655,866 submissions,
 **78% of the docket**. Reporting that as one campaign would have been a fabricated finding
 that looked spectacular.
@@ -75,7 +75,7 @@ threshold rather than piled on obvious cases. **100 were read individually** (ev
 
 Distribution: 48 `same`, 47 `distinct`, 4 `variant`, 1 `unusable`.
 
-> **These are machine labels.** They were produced by the assistant, not by a human. The spec
+> **These are machine labels.** They were produced by an LLM judge, not by a human. The spec
 > requires judge-human agreement to be measured before judge output enters a finding, so
 > **every precision and recall number below is provisional** until a human labels a subset.
 > `labels/for_human.jsonl` holds 25 pairs, 5 per band, for exactly that.
@@ -114,8 +114,8 @@ round thresholds and reached the wrong conclusion. With thresholds selected on h
 matched precision, embeddings collapse 11.22% against MinHash's 7.34%. Embeddings, a downloaded model and an encoding pass beat forty lines of MinHash by an
 amount that would not survive a different random seed.
 
-Stated against the kill condition as it was actually written — *"semantic collapses by
-approximately the same fraction as exact-string dedup"* — it does **not** fire: 9.12% against
+Stated against the kill condition as it was actually written, *"semantic collapses by
+approximately the same fraction as exact-string dedup"*, it does **not** fire: 9.12% against
 2.55% is 3.6x, so embeddings comfortably beat exact hashing. It is the rung **immediately
 below** that they fail to beat. The honest sentence is: *character-level near-duplicate
 detection captures essentially everything semantic embeddings capture at equal precision on

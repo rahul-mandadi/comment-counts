@@ -112,7 +112,6 @@ def test_clustering_survives_a_mass_campaign_without_materialising_pairs():
     """The defect that killed a run: 27,807 identical docs on FWS would have
     emitted 386 million pairs. Memory must stay flat in the campaign size."""
     import numpy as np, analysis
-    rng = np.random.default_rng(3)
     big = np.tile(np.array([[1.0, 0.0, 0.0]], dtype=np.float32), (800, 1))
     other = np.array([[0.0, 1.0, 0.0]] * 5, dtype=np.float32)
     v = np.vstack([big, other])

@@ -9,7 +9,6 @@ The local backend is not a toy for tests. It is what makes every stage runnable
 and debuggable without credentials, which is also what keeps the AWS bill
 attached to work that has already been proven to run.
 """
-import io
 import os
 import shutil
 

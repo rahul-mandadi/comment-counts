@@ -118,7 +118,7 @@ Estimates to verify against current pricing, not quotes:
 
 | item | rough |
 |---|---|
-| Titan embeddings, batch, ~500k documents | $10 – 20 |
+| Titan embeddings, batch, ~500k documents | $10 to $20 |
 | S3 storage, ~10 GB, one month | under $1 |
 | requests and transfer | cents |
 | **total for Phase 2** | **under $50** |
@@ -129,7 +129,7 @@ embeddings land in your bucket.
 
 Set a billing alarm before the first batch job. The two line items that can
 surprise, per the spec's own cost note, are OCR over scanned attachments and a
-managed vector index. **Neither is in the Phase 2 plan** — attachment text is
+managed vector index. **Neither is in the Phase 2 plan**: attachment text is
 already extracted in the mirror's `derived-data`, and exact blocked cosine is
 fast enough at this scale that an ANN index would add a recall parameter to
 defend for no speed that matters.

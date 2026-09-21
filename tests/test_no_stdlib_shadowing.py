@@ -1,6 +1,5 @@
 import os
 import sys
-import sysconfig
 
 
 def test_no_module_in_src_shadows_a_stdlib_module():

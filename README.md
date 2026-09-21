@@ -1,13 +1,13 @@
 # What does a public comment count measure?
 
 **On four federal dockets, 306,854 of 479,311 comment records are redundant copies of another
-record's exact text — and every one is published as a separate comment.**
+record's exact text, and every one is published as a separate comment.**
 
 Full claims, with confidence levels and the caveats: **[docs/FINDING.md](docs/FINDING.md)**
 
 ## The short version
 
-US agencies must take public comments on proposed rules, and the count becomes evidence —
+US agencies must take public comments on proposed rules, and the count becomes evidence:
 cited in press coverage and in litigation over whether an agency considered the public.
 
 regulations.gov publishes a `duplicateComments` field. It is **not** a deduplication pass: on

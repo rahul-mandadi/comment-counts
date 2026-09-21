@@ -42,7 +42,7 @@ def attachment_coverage(docket_id, agency):
     import collections
     with_binary, binary_files = set(), 0
     exts = collections.Counter()
-    pdf_files, nonpdf_only = set(), collections.Counter()
+    pdf_files = set()
     per_comment_ext = collections.defaultdict(set)
     for k in mirror.list_keys(dockets.attachments_prefix(docket_id, agency)):
         if k.endswith("/"):
