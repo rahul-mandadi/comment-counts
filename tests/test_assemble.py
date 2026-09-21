@@ -112,3 +112,44 @@ def test_real_pointer_bodies_from_both_dockets():
         "See attached notice of intent to testify",
     ]:
         assert assemble.is_pointer(body), body
+
+
+def test_pointer_with_the_submitter_named_first():
+    """Institutions put their own name before the verb. All verbatim."""
+    for body in [
+        "Mark Sangil of Arktos Environmental hereby submits the attached memorandum "
+        "and comments to the Proposed Rules under Docket EPA-HQ-OAR-2021-0317",
+        'Pima County submits the attached comments in response to the "Proposed Rule; '
+        'Endangered and Threatened Wildlife and Plants".',
+        "The Sabin Center for Climate Change Law at Columbia Law School submits the "
+        "attached comments on the proposed rule.",
+        "Arch Masonry, Inc. hereby files a Notice of Intent to Appear and submits the "
+        "attached information.",
+        "The Rutgers Center for Tobacco Studies submits the attached comment in support.",
+    ]:
+        assert assemble.is_pointer(body), body
+
+
+def test_mid_pointer_defers_to_its_attachment():
+    body = "Pima County submits the attached comments in response to the Proposed Rule."
+    text, src = assemble.assemble({"comment": body}, ["The county's real objection."])
+    assert src == "attachment" and text == "The county's real objection."
+
+
+def test_a_substantive_body_that_mentions_submitting_an_attachment_is_kept():
+    """The dangerous case for the mid-sentence rule: SHORT enough to pass the
+    length guard, with the attachment mentioned early, but making a real
+    argument. Only the sentence-count guard saves this one."""
+    body = ("We submit the attached analysis. The designation ignores 11,000 acres "
+            "of existing county easements. The economic analysis omits municipal "
+            "water costs. The consultation timeline cannot be met.")
+    assert len(body) < assemble.POINTER_MID_MAX_CHARS
+    assert not assemble.is_pointer(body)
+    text, src = assemble.assemble({"comment": body}, ["appendix"])
+    assert src == "body"
+
+
+def test_a_two_sentence_signpost_is_still_a_pointer():
+    body = ("The Minnesota Department of Health is submitting a letter and three "
+            "attachments for the FDA's review. Thank you.")
+    assert assemble.is_pointer(body)

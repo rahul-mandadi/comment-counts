@@ -87,13 +87,40 @@ _POINTER = re.compile(
     r"(?:the\s+|my\s+|our\s+|a\s+|attached\s+)*"
     r"(?:attach(?:ed|ment)s?|enclos(?:ed|ure)s?|upload(?:ed)?|copy)\b",
     re.I)
+
+# A pointer does not have to OPEN with the verb. Institutions write their own
+# name first: "Pima County submits the attached comments...", "Mark Sangil of
+# Arktos Environmental hereby submits the attached memorandum...". 31 records
+# across the four fetched dockets read that way -- West Virginia DEP, Rutgers,
+# Columbia Law School, Minnesota Dept of Health -- and every one had its real
+# comment sitting unopened in an attachment while the pipeline compared the
+# signpost. Found because a labelled pair turned out to be two such signposts
+# differing only in the signatory's name.
+_POINTER_MID = re.compile(
+    r"\b(?:submits?|submitting|encloses?|enclosing|attaches?|files?|forwards?|"
+    r"provides?|offers?|transmits?)\b[^.]{0,80}"
+    r"\b(?:attach(?:ed|ment)s?|enclos(?:ed|ure)s?)\b",
+    re.I)
+POINTER_MID_MAX_CHARS = 600
 POINTER_MAX_CHARS = 400
 
 
 def is_pointer(body):
-    """A short body that opens by pointing at an attachment and nothing else."""
+    """A short body whose whole content is a signpost to an attachment."""
     b = normalize_space(strip_html(body))
-    return bool(b) and len(b) <= POINTER_MAX_CHARS and bool(_POINTER.match(b))
+    if not b:
+        return False
+    if len(b) <= POINTER_MAX_CHARS and _POINTER.match(b):
+        return True
+    # The same thing with the submitter's name in front of the verb. Length
+    # alone is too crude a guard: a 400-character comment that makes a real
+    # argument and mentions its appendix early would be thrown away. So also
+    # require the body to be essentially JUST the signpost -- at most two
+    # sentences. A submission that says anything of its own says it in a third.
+    if len(b) > POINTER_MID_MAX_CHARS or not _POINTER_MID.search(b[:300]):
+        return False
+    sentences = [x for x in re.split(r"(?<=[.!?])\s+", b) if x.strip()]
+    return len(sentences) <= 2
 
 
 def assemble(record, attachment_texts):
