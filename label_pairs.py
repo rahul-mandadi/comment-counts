@@ -12,8 +12,19 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-IN = os.path.join(HERE, "labels", "for_human.jsonl")
-OUT = os.path.join(HERE, "labels", "human_labels.json")
+
+# `python label_pairs.py jaccard` labels the second, Jaccard-stratified sample.
+# Kept as separate files rather than one pool because the two samples answer
+# different questions and must not be pooled when a threshold is selected: the
+# cosine sample constrains the embedding rung, the Jaccard sample the near rung.
+SETS = {
+    "cosine": ("for_human.jsonl", "human_labels.json"),
+    "jaccard": ("for_human_jaccard.jsonl", "human_labels_jaccard.json"),
+    "check": ("for_human_jaccard_subset.jsonl", "human_labels_jaccard.json"),
+}
+_which = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] in SETS else "cosine"
+IN = os.path.join(HERE, "labels", SETS[_which][0])
+OUT = os.path.join(HERE, "labels", SETS[_which][1])
 
 KEYS = {"s": "same", "v": "variant", "d": "distinct", "u": "unusable"}
 
@@ -47,7 +58,7 @@ def main():
             i += 1
             continue
         os.system("clear")
-        print(f"pair {pid}   ({len(done)}/{len(rows)} labelled)")
+        print(f"[{_which}] pair {pid}   ({len(done)}/{len(rows)} labelled)")
         print("=" * 78)
         print("A:", r["a_text"][:1100].strip())
         print("-" * 78)
@@ -71,7 +82,7 @@ def main():
     json.dump(done, open(OUT, "w"), indent=1, sort_keys=True)
     print(f"\nsaved {len(done)}/{len(rows)} to {OUT}")
     if len(done) == len(rows):
-        print("all done. run:  PYTHONPATH=src .venv/bin/python src/agreement.py")
+        print("all done. run:  PYTHONPATH=src .venv/bin/python src/select.py")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,11 @@
 """Derive the operating point from the labels. THE headline must be re-runnable.
 
+NAMED `threshold_select`, not `select`. `src/` is on PYTHONPATH, so a module
+called `select.py` shadows the standard library's `select`, and everything that
+reaches it -- subprocess, asyncio, torch's loaders -- dies with
+`AttributeError: module 'select' has no attribute 'select'`. That took out a
+Phase 2 run within minutes of the file being added.
+
 `docs/phase1.md` has stated the ladder comparison wrongly twice, and both times
 the numbers lived only in a chat transcript and a markdown table. Nothing in the
 repo recomputed them, so nothing could contradict them. This does.
@@ -9,7 +15,7 @@ actually constrain each threshold.** A threshold is only meaningful if moving it
 within the label-admissible range changes the answer little. On this label set
 that is true of cosine and spectacularly false of Jaccard.
 
-    PYTHONPATH=src .venv/bin/python src/select.py
+    PYTHONPATH=src .venv/bin/python src/threshold_select.py
 """
 import json
 import os

@@ -365,7 +365,7 @@ precision (11.22% vs 7.34%). That claim is withdrawn.** It is the third error of
 family in this document, and the arithmetic was right every time -- what was wrong was
 believing the threshold meant something.
 
-Run `PYTHONPATH=src python src/select.py`, which now derives this rather than asserting it:
+Run `PYTHONPATH=src python src/threshold_select.py`, which now derives this rather than asserting it:
 
 | rung | label-admissible threshold range | width | collapse across that range |
 |---|---|---|---|
