@@ -180,3 +180,24 @@ def test_lsh_based_minhash_clustering_finds_planted_duplicates():
     sizes = sorted(len(c) for c in cl)
     assert sizes[-1] >= 10 and 4 in sizes, sizes
     assert sum(len(c) for c in cl) == 20
+
+
+def test_a_component_of_one_unique_text_does_not_crash_clustering():
+    """A 238,944-document docket produced a component whose members were all
+    the SAME text, so the exact-key collapse left one representative.
+    AgglomerativeClustering requires two samples and the run died."""
+    import numpy as np, analysis, dedup
+    mh = dedup.MinHasher(num_perm=128, seed=6)
+    texts = ["one identical campaign letter repeated many times over"] * 60
+    sigs = np.array([mh.signature(dedup.shingles(t)) for t in texts])
+    cl = analysis.minhash_complete_clusters(sigs, 0.625, max_component=10, texts=texts)
+    assert len(cl) == 1 and len(cl[0]) == 60
+
+
+def test_same_case_on_the_embedding_path():
+    import numpy as np, analysis
+    v = np.ones((60, 5), dtype=np.float32)
+    v /= np.linalg.norm(v, axis=1, keepdims=True)
+    texts = ["identical"] * 60
+    cl, meta = analysis.scalable_clusters(v, 0.9, max_component=10, texts=texts)
+    assert len(cl) == 1 and len(cl[0]) == 60 and meta["oversized_components"] == []

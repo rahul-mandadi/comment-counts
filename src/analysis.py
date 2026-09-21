@@ -309,6 +309,13 @@ def minhash_complete_clusters(sigs, threshold, max_component=4000, block=256,
             for i in members:
                 byhash[dedup.exact_key(texts[i])].append(i)
             reps = [g[0] for g in byhash.values()]
+            if len(reps) == 1:
+                # every member of the component is the SAME text. No clustering
+                # needed or possible -- AgglomerativeClustering requires two
+                # samples, and this is what a 238,944-document docket with one
+                # enormous uniform campaign actually produces.
+                out.append(members)
+                continue
             if len(reps) <= max_component:
                 sub = sigs[reps]
                 d = 1.0 - _agree_block(sub, 0, len(reps))
