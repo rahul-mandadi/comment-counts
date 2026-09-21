@@ -91,6 +91,39 @@ def strip_envelope(text, window=1500):
     return text[m.start():].strip()
 
 
+# pdfminer emits a mail header as two column runs: the LABELS first, then the
+# VALUES. So a salutation can appear physically above the sender and date:
+#   "Perez, JuanB From: Sent: To: Subject: Dear Administrator Regan,
+#    Lauren Pollack <...> Friday, January 27, 2023 10:58 AM A-AND-R-DOCKET ..."
+# Cutting at "Dear" then KEEPS the envelope values. 25 records came out of the
+# first version that way, and 392 more kept their headers because no salutation
+# was found at all -- together about 11% of EPA-HQ-OAR-2021-0317. These strip
+# the shared boilerplate wherever it sits, without needing to locate the body.
+_MAILBOX = re.compile(r"\bA-AND-R-DOCKET\b(?:@\S+)?", re.I)
+_LABEL_RUN = re.compile(
+    r"(?:\b(?:From|Sent|To|Cc|Bcc|Subject|Attachments?|Importance|Date):\s*){2,}", re.I)
+_LONG_DATE = re.compile(
+    r"\b(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,\s+"
+    r"(?:January|February|March|April|May|June|July|August|September|October|"
+    r"November|December)\s+\d{1,2},\s+\d{4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?)?",
+    re.I)
+
+
+def strip_header_debris(text, window=900):
+    """Remove mail-header debris from the opening of a document.
+
+    Scoped to a window so a date or a mailbox mentioned in the BODY of a long
+    comment survives. Only the opening of a document is envelope.
+    """
+    if not text:
+        return text
+    head, tail = text[:window], text[window:]
+    head = _LABEL_RUN.sub(" ", head)
+    head = _MAILBOX.sub(" ", head)
+    head = _LONG_DATE.sub(" ", head)
+    return head + tail
+
+
 def clean(text):
     if not text:
         return ""
@@ -109,6 +142,7 @@ def clean(text):
     if m and len(text) < 400:
         text = ""
     text = strip_envelope(text)
+    text = strip_header_debris(text)
     text = _EMAIL.sub(" ", text)
     text = _URL.sub(" ", text)
     text = _DOCKET_LINE.sub(" ", text)

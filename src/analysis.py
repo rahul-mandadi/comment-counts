@@ -173,13 +173,28 @@ def scalable_clusters(vecs, threshold, max_component=4000, block=512,
     for s in range(0, n, block):
         e = min(s + block, n)
         sims = vecs[s:e] @ vecs.T
-        rows_i, cols_j = np.nonzero(sims >= threshold)
-        for a, b in zip(rows_i, cols_j):
-            i = s + int(a); j = int(b)
-            if j > i:
-                u.union(i, j)
-                edges += 1
-        del sims, rows_i, cols_j
+        for a in range(e - s):
+            i = s + a
+            js = np.nonzero(sims[a, i + 1:] >= threshold)[0]
+            if js.size == 0:
+                continue
+            edges += int(js.size)
+            # Union i with one member per DISTINCT existing component rather
+            # than with every match. A mass campaign makes js enormous -- FDA
+            # has 175,285 documents and a block-wide np.nonzero over it
+            # produced tens of millions of indices at once, which killed the
+            # process at row 42,496. After the first row of a campaign its
+            # members already share a root, so this collapses to a handful of
+            # unions per row while producing identical components.
+            roots = {u.find(i)}
+            for j in js + i + 1:
+                r = u.find(int(j))
+                if r not in roots:
+                    u.union(i, int(j))
+                    roots.add(u.find(i))
+                    roots.discard(r)
+            del js
+        del sims
         if progress:
             progress(e, n)
     comps = u.groups()
@@ -213,3 +228,70 @@ def scalable_clusters(vecs, threshold, max_component=4000, block=512,
             out.extend(complete_link_clusters(vecs, threshold, index_subset=members))
     return out, {"edges": edges, "components": len(comps),
                  "oversized_components": oversized}
+
+
+def minhash_complete_clusters(sigs, threshold, max_component=4000, block=512,
+                              texts=None):
+    """Complete-linkage clustering on MinHash signatures.
+
+    Exists so the near rung is clustered the same way as the semantic rung.
+    Phase 1 reports its headline comparison as complete linkage on both, and
+    `run_docket` was using connected components for near, so the per-docket
+    Phase 2 output was not reproducing the comparison it cites. The difference
+    is 7.94% against 7.34% on EPA-HQ-OAR-2021-0317 -- small there, unbounded in
+    campaign size, and the campaign-heavy dockets are the point of Phase 2.
+
+    Signature agreement IS the Jaccard estimate, so the "vectors" here are the
+    signatures and similarity is the fraction of matching permutations.
+    """
+    import numpy as np
+
+    n = sigs.shape[0]
+
+    class _SigView:
+        """Adapts signature agreement to the cosine-shaped interface."""
+        shape = (n, sigs.shape[1])
+
+        def __matmul__(self, other):
+            raise NotImplementedError
+
+    import dedup
+    u = dedup.Union(n)
+    for s in range(0, n, block):
+        e = min(s + block, n)
+        agree = (sigs[s:e, None, :] == sigs[None, :, :]).mean(axis=2)
+        for a in range(e - s):
+            i = s + a
+            js = np.nonzero(agree[a, i + 1:] >= threshold)[0]
+            if js.size == 0:
+                continue
+            roots = {u.find(i)}
+            for j in js + i + 1:
+                r = u.find(int(j))
+                if r not in roots:
+                    u.union(i, int(j))
+                    roots.add(u.find(i))
+                    roots.discard(r)
+        del agree
+
+    out = []
+    for c in u.groups():
+        if len(c) <= 1:
+            out.append(c)
+            continue
+        sub = sigs[c]
+        d = 1.0 - (sub[:, None, :] == sub[None, :, :]).mean(axis=2)
+        np.fill_diagonal(d, 0.0)
+        if len(c) > max_component:
+            out.append(c)          # reported by the caller, not silently split
+            continue
+        from sklearn.cluster import AgglomerativeClustering
+        lab = AgglomerativeClustering(n_clusters=None, metric="precomputed",
+                                      linkage="complete",
+                                      distance_threshold=1.0 - threshold
+                                      ).fit_predict(d.astype(np.float64))
+        g = {}
+        for pos, l in enumerate(lab):
+            g.setdefault(int(l), []).append(c[pos])
+        out.extend(g.values())
+    return out

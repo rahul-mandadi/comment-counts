@@ -35,8 +35,14 @@ def embed_documents(texts, model=None, batch_size=256, show=True, doc_batch=2000
     scale.
 
     Now documents are processed `doc_batch` at a time and pooled as they go, so
-    peak memory is set by the batch rather than by the corpus. The output is
-    identical; only the memory profile changes.
+    peak memory is set by the batch rather than by the corpus.
+
+    Output is identical up to float32 encoder non-determinism, NOT bit-identical:
+    sentence-transformers sorts by length inside a call, so changing the batch
+    changes mini-batch padding. Measured on OSHA-2010-0034, 9 of 1,351 vectors
+    differ by at most 1.6e-07. That does not move any cluster at the operating
+    point, but the closest pair to the threshold there sits 9.5e-07 away, only
+    about 6x the perturbation, so it is not a margin to rely on silently.
     """
     from sentence_transformers import SentenceTransformer
     model = model or SentenceTransformer(MODEL)

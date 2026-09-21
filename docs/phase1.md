@@ -15,8 +15,8 @@ is preserved.
 | | |
 |---|---|
 | comment records (distinct, post `keys.py`) | 3,578 |
-| submissions they represent (sum of `duplicateComments`) | **836,351** |
-| **submissions per record** | **233.99** |
+| submissions they represent (sum of `duplicateComments`) | **837,220** |
+| **submissions per record** | **233.99** (837,220 / 3,578, both the government's own numbers) |
 | records with `duplicateComments` > 1 | 143 (4.0%) |
 | text taken from the comment body | 1,141 |
 | text taken from attachments | 2,346 |
@@ -128,13 +128,20 @@ this docket, and exact hashing captures about a quarter of it.*
 | submissions | 836,313 |
 | records with usable text | 3,449 |
 | clusters (precision-selected) | 3,120 |
-| **collapse the government already did** | **242.48x** |
+| **collapse the government already did** | **233.99x** (its own numbers; 242.48x on our filtered set, which is not the agency's figure) |
 | **collapse this project adds** | **1.11x** |
 | total | 268.05x |
-| **share of the whole reduction already official** | **99.96%** |
+| **share of the whole reduction already official** | 99.96% -- *see caveat* |
 
 At the F1-optimal point (semantic 0.90, precision 0.76) the project's own collapse rises to
 1.38x. It is still under 1% of the total.
+
+**Do not lean on the 99.96%.** It is arithmetically correct and informationally empty: because
+submissions vastly exceed records, the statistic reads **100.000% if our dedup did nothing at
+all and 99.588% if it were perfect.** The entire achievable range is 0.4 points wide, so it
+cannot be evidence that "deduplication is not the finding" -- it would say much the same thing
+either way. The multiplicative pair in the table above is the honest version: **233.99x
+official against 1.11x added.**
 
 **So the deduplication is not the finding, and the spec said so before any of this ran.**
 regulations.gov already publishes `duplicateComments`, and it already bundles the campaigns.
@@ -191,6 +198,18 @@ OSHA-2010-0034 (respirable crystalline silica) was chosen a priori as the low-sa
 technical control. Its job was to test kill condition 3: *if the control collapses as much as
 the campaign-heavy dockets, the method is measuring writing similarity rather than
 coordination and the result is retracted.*
+
+**First, a disclosure this section previously lacked.** `docs/coverage.md` establishes that
+**OSHA-2010-0034 is 74.9% complete** -- the mirror holds 1,406 of 1,878 records. This document
+gives partialness as its stated reason for not running the headline on EPA-HQ-OAR-2013-0602, so
+it has to apply the same standard here. The *official* half of the finding survives intact,
+because a record's published `duplicateComments` is 1 whether or not its siblings are mirrored.
+The **collapse** half does not: the 524-copy form letter is 524 copies of the 74.9% held, and
+the true figure is unknown and probably larger.
+
+**FWS-HQ-ES-2018-0006 is 100.0% complete and is the stronger leg of this finding** -- 64,016
+records, 65,758 submissions, official collapse 1.03x, and a 27,807-member byte-identical
+campaign published as 27,807 separate comments. Lead with FWS; OSHA corroborates.
 
 **The control collapsed six times harder than the campaign docket.**
 
@@ -303,17 +322,26 @@ the extra effort would not change the conclusion.
 | raw agreement, 4 classes | 0.839 |
 | raw agreement, merge vs keep | 0.871 |
 | **Cohen's kappa, merge vs keep** | **0.729** |
-| 95% CI (bootstrap) | **[0.475, 0.936]** |
+| 95% CI (bootstrap) | **[0.451, 0.934]** |
 
 0.61-0.80 is conventionally "substantial agreement", so **kill condition 4 does not fire**.
-The interval is wide and stays wide: resampling from the observed agreement rate, 50 pairs
-would put the lower bound at 0.521 and **100 pairs at 0.588**, still short of 0.6. The width
-is a property of the agreement rate, not of the sample size, so labelling more would have
-bought almost nothing. That was computed before spending the effort rather than after.
 
-**The disagreements have a direction.** In 3 of 5 the machine said `same` where the human said
-`distinct`; the reverse happened once. The judge **over-merges**, which is the error the
-project declared in advance as the worse one.
+**An earlier version of this section defended stopping at 31 with a false statistical claim** --
+that the interval's width "is a property of the agreement rate, not of the sample size".
+Bootstrap CI width scales as ~1/sqrt(n), and this file's own projection showed a lower bound
+*rising* with n, which is sample-size dependence. Carried further at the observed agreement
+pattern: n=100 gives [0.582, 0.864] and **n=200 gives [0.622, 0.829]**, where the lower bound
+finally clears 0.6 and the kill condition is genuinely cleared rather than merely not fired.
+
+The honest reason for stopping at 31 is diminishing returns against a labeller's time, which
+is a fine reason. It is not that more labels would not have helped.
+
+**The disagreements have a direction, on a very small base.** In **2** of 5 the machine said
+`same` where the human said `distinct` (pairs 95 and 116); the reverse happened once. The third
+machine-`same` is pair 123, where the human said `unusable` -- not an over-merge. So the ratio
+is 2:1 on n=3, not the 3:1 stated in an earlier version of this file. The direction is still
+toward over-merging, which is the error declared in advance as the worse one, but three
+observations do not establish a rate.
 
 ### The threshold is robust to who labelled it
 
@@ -330,31 +358,68 @@ the precision-1.0 boundary. So the machine labels were fit for the purpose they 
 -- and that is now evidence rather than assumption, which it could not have been without
 labelling blind first.
 
-### The correction: embeddings do earn their cost
+### RETRACTED: the ladder rungs cannot be compared on this label set
 
-With **both** rungs' thresholds selected by the same procedure, on the same human labels, at
-matched precision, and clustered with complete linkage:
+**This section previously claimed embeddings collapse 53% more than MinHash at equal
+precision (11.22% vs 7.34%). That claim is withdrawn.** It is the third error of the same
+family in this document, and the arithmetic was right every time -- what was wrong was
+believing the threshold meant something.
 
-| rung | threshold | collapse |
+Run `PYTHONPATH=src python src/select.py`, which now derives this rather than asserting it:
+
+| rung | label-admissible threshold range | width | collapse across that range |
+|---|---|---|---|
+| embeddings (cosine) | (0.9631, **0.9641**] | **0.001** | 11.22% - 11.45% |
+| MinHash (jaccard) | (0.3438, **0.7891**] | **0.445** | **7.34% - 29.23%** |
+
+**No labelled pair has a Jaccard between 0.3438 and 0.7891.** Every threshold in that
+interval therefore achieves precision 1.00 with identical recall, so the labels cannot
+distinguish them, and `select_threshold` returns the top of the plateau by construction --
+which is the point that *minimises* MinHash's collapse. Anywhere below Jaccard ~0.62, still at
+precision 1.00 on these labels, **MinHash beats embeddings**.
+
+So the comparison picked one point in a 22-percentage-point-wide window the labels do not
+constrain, and compared it against a point in a 0.23-point window. It measured where a
+selection rule landed, not what the methods can do.
+
+**The cause is the stratification, and it is worse than the precision/recall caveat this
+document already carried.** The pair sample is stratified over *cosine* bands starting at 0.80.
+Of the pairs with Jaccard >= 0.50 on this docket, **10.7% have cosine below 0.80 and are
+structurally unlabellable.** MinHash's decision region was never sampled. `src/quality.py`
+warned this biases precision estimates; it in fact invalidates the threshold.
+
+**What is still true:** exact 3.31% and embeddings 11.22% are both computed at thresholds the
+labels do constrain, and semantic beating exact by 3.4x stands. Kill condition 2, which is
+written against *exact*, does not fire.
+
+**The fix, which is one afternoon:** stratify a second sample of ~40 pairs over *Jaccard*
+bands from 0.35 to 0.80, label them blind, re-run `select.py`. Until that exists the honest
+sentence is the one now in the README.
+
+### Two more places the same mistake hid
+
+**The robustness check was run on the rung where it passes.** This file reported that machine
+and human labels give cosine thresholds 0.001 apart and called it the load-bearing result for
+Phase 2. On the *Jaccard* rung the same 31 labels give **0.3438 (machine) against 0.7891
+(human)** -- a factor of 2.3, moving collapse from 7.34% to ~29%. Reporting one rung and not
+the other was selection by accident, but it was selection.
+
+**The two thresholds agree because of where two disagreed pairs happened to land.** Pairs 116
+(cos 0.9631) and 118 (cos 0.9618) are the two highest-scoring non-unanimous pairs in the
+sample, and they are exactly the pairs that define the human and machine thresholds. Leave-one-
+out over the 30 labels gives thresholds {0.9206, 0.9641, 0.9649}:
+
+| perturbation | threshold | collapse |
 |---|---|---|
-| exact hash | - | 3.31% |
-| MinHash | jaccard **0.789** | **7.34%** |
-| embeddings | cosine **0.964** | **11.22%** |
+| flip pair 116 distinct -> same | 0.9206 | **23.22%** |
+| as labelled | 0.9641 | 11.22% |
+| flip pair 112 same -> distinct | 0.9903 | **5.25%** |
 
-**Embeddings collapse 53% more than MinHash at equal precision.** Kill condition 2 does not
-fire: 11.22% against exact's 3.31% is 3.4x, and against MinHash 1.5x.
-
-**This reverses what this document previously said, twice**, and the reason is worth keeping.
-Earlier versions compared the rungs at round numbers chosen before any labels existed --
-MinHash at 0.70 against embeddings at 0.97 -- and reported first that embeddings led by 0.75
-points, then that MinHash led by 0.61. Both were artifacts. **A similarity threshold is not
-comparable across methods**: 0.70 and 0.97 are not the same operating point, so those
-comparisons measured calibration rather than ability. Only a threshold selected per method,
-against labels, at matched precision, compares the methods themselves.
-
-That is also the answer to "why bother hand-labelling 31 pairs when the pipeline runs without
-them". Without labels there is no principled threshold, and without a principled threshold the
-headline comparison of the whole ladder was wrong in both directions.
+**One label changing moves the headline from 5.25% to 23.22%**, an interval that comfortably
+contains MinHash's 7.34%. And of the 4 labelled pairs within +/-0.002 of the threshold, the two
+labellers disagree on **2**. Kappa 0.729 averaged over pairs spanning cosine 0.74 to 1.00
+conceals that completely: agreement in the decision region is what matters and it is 50% on
+n=4.
 
 ## What this does not establish
 

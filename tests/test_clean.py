@@ -105,3 +105,36 @@ def test_a_receipt_WITH_a_comment_keeps_the_comment():
 def test_the_word_web_in_ordinary_prose_survives():
     t = "Dear EPA, the web of pipelines across our state leaks constantly."
     assert clean.clean(t) == t
+
+
+def test_salutation_above_the_envelope_values_still_gets_cleaned():
+    # pdfminer column order puts "Dear ..." before the sender and date, so the
+    # salutation cut alone keeps the envelope. 25 real records looked like this.
+    t = ("Perez, JuanB From: Sent: To: Subject: Attachments: Dear Administrator Regan, "
+         "Lauren Pollack <lauren@team-arc.com> Friday, January 27, 2023 10:58 AM "
+         "A-AND-R-DOCKET Comments for Docket ID No. EPA-HQ-OAR-2021-0317 "
+         "Attached you will find names of individuals who commented.")
+    out = clean.clean(t)
+    assert "A-AND-R-DOCKET" not in out
+    assert "Friday, January 27, 2023" not in out
+    assert "Attached you will find names of individuals" in out
+
+
+def test_header_debris_goes_even_with_no_salutation_at_all():
+    t = ("From: Sent: To: Subject: A-AND-R-DOCKET Tuesday, February 7, 2023 2:02 PM "
+         "Methane emissions must be cut immediately.")
+    out = clean.clean(t)
+    assert "A-AND-R-DOCKET" not in out
+    assert "Methane emissions must be cut immediately." in out
+
+
+def test_a_date_deep_in_the_body_is_NOT_removed():
+    body = ("Dear Administrator Regan, " + "our analysis covers many wells. " * 40 +
+            "On Monday, March 3, 2025 the operator reported a release.")
+    out = clean.clean(body)
+    assert "Monday, March 3, 2025" in out
+
+
+def test_the_word_to_in_ordinary_prose_is_untouched():
+    t = "Dear EPA, we need to act to reduce emissions to protect communities."
+    assert clean.clean(t) == t
