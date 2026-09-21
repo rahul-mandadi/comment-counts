@@ -271,22 +271,31 @@ def minhash_complete_clusters(sigs, threshold, max_component=4000, block=256,
 
     n = sigs.shape[0]
     u = dedup.Union(n)
-    for s in range(0, n, block):
-        e = min(s + block, n)
-        agree = _agree_block(sigs, s, e)
-        for a in range(e - s):
-            i = s + a
-            js = np.nonzero(agree[a, i + 1:] >= threshold)[0]
-            if js.size == 0:
-                continue
-            roots = {u.find(i)}
-            for j in js + i + 1:
-                r = u.find(int(j))
-                if r not in roots:
-                    u.union(i, int(j))
-                    roots.add(u.find(i))
-                    roots.discard(r)
-        del agree
+
+    # Candidates from LSH, not all pairs. All-pairs is O(n^2 * num_perm): at
+    # FDA-2021-N-1349's 175,287 documents that is ~3.9e12 comparisons and it
+    # had run 46 minutes without finishing; ED-2021-OCR-0166 would be twice
+    # that. LSH is the standard answer and was already being computed for the
+    # candidate set.
+    #
+    # The cost is recall, and it should be stated rather than assumed. With 32
+    # bands of 4 rows, a pair at the operating threshold 0.625 is detected with
+    # probability 1 - (1 - 0.625^4)^32 = 99.5% at the production signature
+    # length of 128. So a handful of true
+    # near-duplicates are missed, which makes the near rung's collapse a slight
+    # UNDER-estimate -- the conservative direction, and the same direction as
+    # the precision-first operating point.
+    # Band the signature to whatever length it actually has. Hard-coding
+    # 32x4 asserts out on a 64-permutation signature, which is exactly what a
+    # test used -- the production path never saw it because it always passes
+    # 128.
+    rows_per_band = 4
+    bands = max(1, sigs.shape[1] // rows_per_band)
+    for i, j in dedup.lsh_candidate_pairs(sigs, bands=bands, rows=rows_per_band):
+        if u.find(i) == u.find(j):
+            continue
+        if float(np.mean(sigs[i] == sigs[j])) >= threshold:
+            u.union(i, j)
 
     from sklearn.cluster import AgglomerativeClustering
     out, oversized = [], []

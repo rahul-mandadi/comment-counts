@@ -144,6 +144,17 @@ def test_agree_block_matches_the_naive_broadcast():
     assert np.allclose(naive, got, atol=1e-6)
 
 
+def test_minhash_clustering_works_on_a_short_signature():
+    """32 bands x 4 rows asserts out below 128 permutations. Production always
+    passes 128, so only a test caught this."""
+    import numpy as np, analysis, dedup
+    mh = dedup.MinHasher(num_perm=64, seed=8)
+    texts = ["alpha beta gamma delta epsilon zeta"] * 6 + ["totally other words here"] * 3
+    sigs = np.array([mh.signature(dedup.shingles(t, k=3)) for t in texts])
+    cl = analysis.minhash_complete_clusters(sigs, 0.6, texts=texts)
+    assert sum(len(c) for c in cl) == 9
+
+
 def test_minhash_complete_clustering_is_unchanged_by_block_size():
     import numpy as np, analysis, dedup
     mh = dedup.MinHasher(num_perm=64, seed=8)
@@ -155,3 +166,17 @@ def test_minhash_complete_clustering_is_unchanged_by_block_size():
     b = analysis.minhash_complete_clusters(sigs, 0.6, block=1000, texts=texts)
     norm = lambda cs: sorted(sorted(c) for c in cs)
     assert norm(a) == norm(b)
+
+
+def test_lsh_based_minhash_clustering_finds_planted_duplicates():
+    import numpy as np, analysis, dedup
+    mh = dedup.MinHasher(num_perm=128, seed=4)
+    base = " ".join(f"word{i}" for i in range(120))
+    texts = ([base] * 10
+             + [base + " signed jane smith"] * 6
+             + [" ".join(f"zzz{i}" for i in range(120))] * 4)
+    sigs = np.array([mh.signature(dedup.shingles(t)) for t in texts])
+    cl = analysis.minhash_complete_clusters(sigs, 0.625, texts=texts)
+    sizes = sorted(len(c) for c in cl)
+    assert sizes[-1] >= 10 and 4 in sizes, sizes
+    assert sum(len(c) for c in cl) == 20
