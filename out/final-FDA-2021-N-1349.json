@@ -1,0 +1,65 @@
+{
+ "docket": "FDA-2021-N-1349",
+ "records_in_docket": 175313,
+ "records_usable": 175285,
+ "no_usable_text": 28,
+ "no_text_at_assembly": 26,
+ "emptied_by_cleaning": 2,
+ "graph": {
+  "edges": 907068421,
+  "components": 53962,
+  "oversized_components": []
+ },
+ "rungs": {
+  "exact": {
+   "clusters": 63935,
+   "largest_cluster_records": 5047,
+   "largest_cluster_submissions": 5047,
+   "singletons": 63303,
+   "multi_record_clusters": 632,
+   "rung": "exact",
+   "records_in": 175285,
+   "collapse_vs_records": 2.7416,
+   "extra_collapse_pct": 63.53
+  },
+  "near": {
+   "clusters": 56246,
+   "largest_cluster_records": 26965,
+   "largest_cluster_submissions": 26965,
+   "singletons": 53983,
+   "multi_record_clusters": 2263,
+   "rung": "near",
+   "records_in": 175285,
+   "collapse_vs_records": 3.1164,
+   "extra_collapse_pct": 67.91
+  },
+  "near_single_link": 50529,
+  "semantic": {
+   "clusters": 57298,
+   "largest_cluster_records": 26940,
+   "largest_cluster_submissions": 26940,
+   "singletons": 55008,
+   "multi_record_clusters": 2290,
+   "rung": "semantic",
+   "records_in": 175285,
+   "collapse_vs_records": 3.0592,
+   "extra_collapse_pct": 67.31
+  }
+ },
+ "semantic_linkage": "complete",
+ "margin": {
+  "submissions": 175476,
+  "records": 175285,
+  "clusters": 57298,
+  "official_collapse": 1.0,
+  "our_additional_collapse": 3.0592,
+  "total_collapse": 3.06,
+  "share_of_collapse_already_official": 0.001616
+ },
+ "thresholds": {
+  "cosine": 0.9641,
+  "jaccard": 0.625,
+  "selected_on": "41 blind human labels on EPA-HQ-OAR-2021-0317, pooled from a cosine-stratified and a Jaccard-stratified sample"
+ },
+ "seconds": 1496.3
+}

@@ -1,0 +1,65 @@
+{
+ "docket": "FWS-HQ-ES-2018-0006",
+ "records_in_docket": 64019,
+ "records_usable": 64016,
+ "no_usable_text": 3,
+ "no_text_at_assembly": 3,
+ "emptied_by_cleaning": 0,
+ "graph": {
+  "edges": 641385216,
+  "components": 2645,
+  "oversized_components": []
+ },
+ "rungs": {
+  "exact": {
+   "clusters": 4887,
+   "largest_cluster_records": 27807,
+   "largest_cluster_submissions": 27807,
+   "singletons": 4747,
+   "multi_record_clusters": 140,
+   "rung": "exact",
+   "records_in": 64016,
+   "collapse_vs_records": 13.0992,
+   "extra_collapse_pct": 92.37
+  },
+  "near": {
+   "clusters": 2655,
+   "largest_cluster_records": 28152,
+   "largest_cluster_submissions": 28152,
+   "singletons": 2466,
+   "multi_record_clusters": 189,
+   "rung": "near",
+   "records_in": 64016,
+   "collapse_vs_records": 24.1115,
+   "extra_collapse_pct": 95.85
+  },
+  "near_single_link": 2443,
+  "semantic": {
+   "clusters": 2885,
+   "largest_cluster_records": 27900,
+   "largest_cluster_submissions": 27900,
+   "singletons": 2612,
+   "multi_record_clusters": 273,
+   "rung": "semantic",
+   "records_in": 64016,
+   "collapse_vs_records": 22.1893,
+   "extra_collapse_pct": 95.49
+  }
+ },
+ "semantic_linkage": "complete",
+ "margin": {
+  "submissions": 65758,
+  "records": 64016,
+  "clusters": 2885,
+  "official_collapse": 1.03,
+  "our_additional_collapse": 22.1893,
+  "total_collapse": 22.79,
+  "share_of_collapse_already_official": 0.027707
+ },
+ "thresholds": {
+  "cosine": 0.9641,
+  "jaccard": 0.625,
+  "selected_on": "41 blind human labels on EPA-HQ-OAR-2021-0317, pooled from a cosine-stratified and a Jaccard-stratified sample"
+ },
+ "seconds": 648.4
+}

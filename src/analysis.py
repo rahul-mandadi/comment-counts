@@ -17,6 +17,24 @@ import collections
 import dedup
 
 
+def submissions(rows):
+    """Sum of duplicateComments, and whether the field is populated at all.
+
+    Returns None for `total` when no record on the docket carries a value,
+    because "unpopulated" and "one submission each" are different facts and
+    collapsing them fabricates the second. ED-2021-OCR-0166 and
+    OSHA-2010-0034 are wholly unpopulated.
+    """
+    vals = [r.get("duplicateComments") for r in rows]
+    pop = [v for v in vals if v is not None and v > 0]
+    if not pop:
+        return {"total": None, "populated_records": 0, "records": len(rows),
+                "field_populated": False}
+    total = sum(v if (v is not None and v > 0) else 1 for v in vals)
+    return {"total": total, "populated_records": sum(1 for v in pop if v > 1),
+            "records": len(rows), "field_populated": True}
+
+
 def cluster_stats(rows, clusters):
     """clusters: list of lists of row indices."""
     sizes = [len(c) for c in clusters]
@@ -42,20 +60,31 @@ def ladder_row(name, rows, clusters, baseline_records):
 
 def margin_over_official(rows, clusters):
     """What the project adds beyond regulations.gov's own duplicate count."""
-    submissions = sum(r["duplicateComments"] for r in rows)
+    sub = submissions(rows)
     records = len(rows)
     n = len(clusters)
+    if sub["total"] is None:
+        # The field is unpopulated on this docket, so there IS no published
+        # submission count and no official collapse to report. Returning 1.00x
+        # here -- which an `or 1` coercion used to do -- invents a government
+        # figure and was the basis of a retracted finding.
+        return {"submissions": None, "records": records, "clusters": n,
+                "official_collapse": None, "field_populated": False,
+                "our_additional_collapse": round(records / max(1, n), 4),
+                "total_collapse": None,
+                "share_of_collapse_already_official": None}
+    total = sub["total"]
     return {
-        "submissions": submissions,
+        "submissions": total,
         "records": records,
         "clusters": n,
-        "official_collapse": round(submissions / max(1, records), 2),
+        "field_populated": True,
+        "records_with_bundled_counts": sub["populated_records"],
+        "official_collapse": round(total / max(1, records), 2),
         "our_additional_collapse": round(records / max(1, n), 4),
-        "total_collapse": round(submissions / max(1, n), 2),
-        # the share of the whole submissions->clusters reduction that the
-        # government had already done before this project ran
+        "total_collapse": round(total / max(1, n), 2),
         "share_of_collapse_already_official": round(
-            1 - (records / max(1, n) - 1) / max(1e-9, (submissions / max(1, n) - 1)), 6),
+            1 - (records / max(1, n) - 1) / max(1e-9, (total / max(1, n) - 1)), 6),
     }
 
 

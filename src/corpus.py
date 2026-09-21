@@ -27,7 +27,14 @@ def load(docket_id, root="data"):
             "text": text,
             "source": source,
             "chars": len(text),
-            "duplicateComments": r.get("duplicateComments") or 1,
+            # NEVER coerce this. `or 1` rewrote 0 to 1 and manufactured a
+            # finding: ED-2021-OCR-0166 and OSHA-2010-0034 carry 0 on EVERY
+            # record, which means the field is UNPOPULATED, and the coercion
+            # turned that into "the agency reports one submission per record".
+            # A whole claim about agency convention rested on it.
+            "duplicateComments": r.get("duplicateComments"),
+            "dc_populated": r.get("duplicateComments") is not None
+                            and r.get("duplicateComments") > 0,
             "organization": r.get("organization"),
             "postedDate": r.get("postedDate"),
             "city": r.get("city"),

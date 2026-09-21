@@ -1,6 +1,16 @@
-out/
+out/*
+!out/final-*.json
+!out/response_stats.json
+!out/coverage_verified.json
+!out/titan_comparison.json
+!out/phase2_summary.json
 __pycache__/
 *.pyc
 .venv/
 data/
 .venv/
+infra/.terraform/
+infra/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+.DS_Store

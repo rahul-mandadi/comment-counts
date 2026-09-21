@@ -1,0 +1,17 @@
+{
+  "MiniLM (local, 384d)": {
+    "threshold": 0.9640815258026123,
+    "clusters": 3062,
+    "collapse": 11.22
+  },
+  "Titan matched (1024d)": {
+    "threshold": 0.9254870414733887,
+    "clusters": 2874,
+    "collapse": 16.67
+  },
+  "Titan native  (1024d)": {
+    "threshold": 0.9546886682510376,
+    "clusters": 2994,
+    "collapse": 13.19
+  }
+}

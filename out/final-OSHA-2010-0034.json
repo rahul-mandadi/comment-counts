@@ -1,0 +1,65 @@
+{
+ "docket": "OSHA-2010-0034",
+ "records_in_docket": 1406,
+ "records_usable": 1351,
+ "no_usable_text": 55,
+ "no_text_at_assembly": 55,
+ "emptied_by_cleaning": 0,
+ "graph": {
+  "edges": 163224,
+  "components": 573,
+  "oversized_components": []
+ },
+ "rungs": {
+  "exact": {
+   "clusters": 799,
+   "largest_cluster_records": 500,
+   "largest_cluster_submissions": 500,
+   "singletons": 785,
+   "multi_record_clusters": 14,
+   "rung": "exact",
+   "records_in": 1351,
+   "collapse_vs_records": 1.6909,
+   "extra_collapse_pct": 40.86
+  },
+  "near": {
+   "clusters": 563,
+   "largest_cluster_records": 561,
+   "largest_cluster_submissions": 561,
+   "singletons": 524,
+   "multi_record_clusters": 39,
+   "rung": "near",
+   "records_in": 1351,
+   "collapse_vs_records": 2.3996,
+   "extra_collapse_pct": 58.33
+  },
+  "near_single_link": 515,
+  "semantic": {
+   "clusters": 597,
+   "largest_cluster_records": 559,
+   "largest_cluster_submissions": 559,
+   "singletons": 561,
+   "multi_record_clusters": 36,
+   "rung": "semantic",
+   "records_in": 1351,
+   "collapse_vs_records": 2.263,
+   "extra_collapse_pct": 55.81
+  }
+ },
+ "semantic_linkage": "complete",
+ "margin": {
+  "submissions": 1351,
+  "records": 1351,
+  "clusters": 597,
+  "official_collapse": 1.0,
+  "our_additional_collapse": 2.263,
+  "total_collapse": 2.26,
+  "share_of_collapse_already_official": 0.0
+ },
+ "thresholds": {
+  "cosine": 0.9641,
+  "jaccard": 0.625,
+  "selected_on": "41 blind human labels on EPA-HQ-OAR-2021-0317, pooled from a cosine-stratified and a Jaccard-stratified sample"
+ },
+ "seconds": 39.4
+}

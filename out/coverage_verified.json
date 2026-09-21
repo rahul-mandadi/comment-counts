@@ -1,0 +1,56 @@
+[
+ {
+  "docket": "ED-2021-OCR-0166",
+  "mirror": 238944,
+  "official": 238987,
+  "missing": 43,
+  "holes": 43,
+  "share": 0.9998,
+  "probe_error": 0
+ },
+ {
+  "docket": "FDA-2021-N-1349",
+  "mirror": 175313,
+  "official": 175317,
+  "missing": 4,
+  "holes": 5,
+  "share": 1.0,
+  "probe_error": 1
+ },
+ {
+  "docket": "FWS-HQ-ES-2018-0006",
+  "mirror": 64019,
+  "official": 64021,
+  "missing": 2,
+  "holes": 2,
+  "share": 1.0,
+  "probe_error": 0
+ },
+ {
+  "docket": "EPA-HQ-OAR-2013-0602",
+  "mirror": 19319,
+  "official": 34479,
+  "missing": 15160,
+  "holes": 15160,
+  "share": 0.5603,
+  "probe_error": 0
+ },
+ {
+  "docket": "EPA-HQ-OAR-2021-0317",
+  "mirror": 3578,
+  "official": 3578,
+  "missing": 0,
+  "holes": 0,
+  "share": 1.0,
+  "probe_error": 0
+ },
+ {
+  "docket": "OSHA-2010-0034",
+  "mirror": 1406,
+  "official": 1878,
+  "missing": 472,
+  "holes": 474,
+  "share": 0.7487,
+  "probe_error": 2
+ }
+]

@@ -1,0 +1,92 @@
+{
+ "OSHA-2010-0034": {
+  "windows": 9391,
+  "response_windows": 198,
+  "response_density": 0.0211,
+  "_offsets": [
+   74200,
+   74550,
+   108150,
+   108500,
+   264600
+  ],
+  "chars": 3287463,
+  "comment_response_pairs": 0,
+  "comment_markers": 0,
+  "commenter_mentions": 493,
+  "response_headings": 1,
+  "fr_pages": 605
+ },
+ "ED-2021-OCR-0166": {
+  "windows": 9282,
+  "response_windows": 1716,
+  "response_density": 0.1849,
+  "_offsets": [
+   28700,
+   29050,
+   30800,
+   31150,
+   43400
+  ],
+  "chars": 3249058,
+  "comment_response_pairs": 0,
+  "comment_markers": 427,
+  "commenter_mentions": 4079,
+  "response_headings": 0,
+  "fr_pages": 423
+ },
+ "EPA-HQ-OAR-2021-0317": {
+  "windows": 9006,
+  "response_windows": 313,
+  "response_density": 0.0348,
+  "_offsets": [
+   265300,
+   265650,
+   276850,
+   277200,
+   277550
+  ],
+  "chars": 3152452,
+  "comment_response_pairs": 111,
+  "comment_markers": 111,
+  "commenter_mentions": 1222,
+  "response_headings": 2,
+  "fr_pages": 408
+ },
+ "EPA-HQ-OAR-2013-0602": {
+  "windows": 7265,
+  "response_windows": 157,
+  "response_density": 0.0216,
+  "_offsets": [
+   75600,
+   75950,
+   77350,
+   77700,
+   93450
+  ],
+  "chars": 2543293,
+  "comment_response_pairs": 0,
+  "comment_markers": 0,
+  "commenter_mentions": 392,
+  "response_headings": 1,
+  "fr_pages": 303
+ },
+ "FWS-HQ-ES-2018-0006": {
+  "windows": 735,
+  "response_windows": 109,
+  "response_density": 0.1483,
+  "_offsets": [
+   6650,
+   7000,
+   37100,
+   40950,
+   46900
+  ],
+  "chars": 257766,
+  "comment_response_pairs": 110,
+  "comment_markers": 109,
+  "commenter_mentions": 241,
+  "response_headings": 1,
+  "fr_pages": 34
+ }
+}
