@@ -23,6 +23,7 @@ SETS = {
     "check": ("for_human_jaccard_subset.jsonl", "human_labels_jaccard.json"),
     "clusters": ("for_human_clusters.jsonl", "human_labels_clusters.json"),
     "big": ("for_human_clusters_big.jsonl", "human_labels_clusters.json"),
+    "margins": ("for_human_margins.jsonl", "human_labels_margins.json"),
 }
 _which = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] in SETS else "cosine"
 IN = os.path.join(HERE, "labels", SETS[_which][0])
