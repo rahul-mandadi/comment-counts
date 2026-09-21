@@ -496,6 +496,41 @@ labellers disagree on **2**. Kappa 0.729 averaged over pairs spanning cosine 0.7
 conceals that completely: agreement in the decision region is what matters and it is 50% on
 n=4.
 
+## Cluster validation: the large clusters are campaigns (2026-09-21)
+
+The spec requires this and is blunt about why: *"A hand-labelled sample of clusters, campaign
+or organic. This is the part that does not compress and does not get delegated -- without it
+there is a clustering demo and no result."*
+
+The distinction is not technical. Ten thousand people making the same point in their own words
+is public opinion; ten thousand paraphrases of one supplied paragraph is a mailing list. The
+pipeline groups by similarity and cannot tell those apart.
+
+Sampled from FWS-HQ-ES-2018-0006's 273 multi-member semantic clusters. The first sample
+stratified evenly across five size bands, which was the wrong design: **four clusters carry
+98.6% of the sampled records and the other 24 carry 1.4%.** Even stratification is right for
+estimating a rate and wrong when what matters is what the big clusters are.
+
+| cluster | records | human label |
+|---|---|---|
+| 24 | 27,900 | **campaign** |
+| 27 | 20,571 | **campaign** |
+| 25 | 8,152 | **campaign** |
+| 26 | 1,628 | **campaign** |
+| | **58,251 (91% of the docket)** | **100% campaign** |
+
+The tie-break was declared toward `organic` -- calling genuine public opinion a campaign is the
+error that erases people from the record -- and no cluster needed it.
+
+**So "2,885 distinct arguments" is a defensible sentence rather than an unvalidated cluster
+count.** The 64,016-record docket resolves to campaigns plus a tail, and the campaign half is
+confirmed by a human rather than inferred from a threshold.
+
+**Bound worth stating:** three members were shown per cluster, so a 27,900-member cluster was
+judged from a sample of three. That is the only way a cluster of that size can be judged at
+all, and it means the label establishes *the cluster has a campaign core*, not *every member
+is campaign text*.
+
 ## What this does not establish
 
 - It does not determine whether any comment is fraudulent. Distinctness is not authenticity.
