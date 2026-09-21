@@ -70,9 +70,39 @@ def is_placeholder(body):
     return not b or bool(_PLACEHOLDER.match(b))
 
 
+# A body can be a POINTER rather than a placeholder: too long and too specific
+# for the placeholder regex, but still only signposting the attachment.
+#   "See attached comments submitted on behalf of a diverse range of expert
+#    stakeholders with experience in and perspective from academia, NGOs..."
+# That is 203 characters and says nothing about the rule. 138 records across the
+# two dockets worked so far had one, and because the body looked substantive the
+# pipeline never opened the attachment -- so it was comparing signposts instead
+# of arguments, on exactly the long organisational submissions (GPA Midstream,
+# Oklahoma DEQ, Society of the Plastics Industry) where distinctness matters most.
+#
+# Found by a human labeller marking such a pair `unusable`, which is the whole
+# reason the label set has an `unusable` option.
+_POINTER = re.compile(
+    r"^\s*(?:please\s+)?(?:kindly\s+)?(?:see|refer\s+to|view|read|find)\s+"
+    r"(?:the\s+|my\s+|our\s+|a\s+|attached\s+)*"
+    r"(?:attach(?:ed|ment)s?|enclos(?:ed|ure)s?|upload(?:ed)?|copy)\b",
+    re.I)
+POINTER_MAX_CHARS = 400
+
+
+def is_pointer(body):
+    """A short body that opens by pointing at an attachment and nothing else."""
+    b = normalize_space(strip_html(body))
+    return bool(b) and len(b) <= POINTER_MAX_CHARS and bool(_POINTER.match(b))
+
+
 def assemble(record, attachment_texts):
     """Return (text, source) where source is body | attachment | none."""
     body = normalize_space(strip_html(record.get("comment") or ""))
+    joined_avail = normalize_space(" ".join(attachment_texts or []))
+    # a pointer defers to the attachment, but ONLY when there is one to defer to
+    if body and is_pointer(body) and joined_avail:
+        return joined_avail, "attachment"
     if body and not is_placeholder(body):
         return body, "body"
     joined = normalize_space(" ".join(attachment_texts or []))

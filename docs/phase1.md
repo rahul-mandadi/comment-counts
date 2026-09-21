@@ -109,8 +109,9 @@ were not comments".
 | **near, MinHash @0.70 (P=1.00)** | **3,099** | **10.15%** | ~30s CPU, no model |
 | **semantic @0.97 (P=1.00)** | **3,120** | **9.54%** | model download + ~45s encode |
 
-**At matched precision the expensive rung buys nothing at all.** On the final cleaned text
-MinHash reaches 10.15% and embeddings 9.54%, so the cheap rung is now marginally *ahead*. Embeddings, a downloaded model and an encoding pass beat forty lines of MinHash by an
+**Superseded -- see "HUMAN LABELS" below.** This paragraph compared the rungs at arbitrary
+round thresholds and reached the wrong conclusion. With thresholds selected on human labels at
+matched precision, embeddings collapse 11.22% against MinHash's 7.34%. Embeddings, a downloaded model and an encoding pass beat forty lines of MinHash by an
 amount that would not survive a different random seed.
 
 Stated against the kill condition as it was actually written — *"semantic collapses by
@@ -287,6 +288,73 @@ index and survived the text change, so no relabelling was needed):
 | near @0.70 | **1.000** | **0.438** | 0.609 |
 | semantic @0.90 | 0.804 | 0.938 | **0.865** |
 | semantic @0.97 | **1.000** | **0.479** | 0.648 |
+
+## HUMAN LABELS -- the result, and a correction to two earlier claims
+
+Rahul labelled **31 pairs blind** on 2026-09-20, without seeing the machine labels or the
+similarity scores. Labelling stopped at 31 rather than 50 because the projection below showed
+the extra effort would not change the conclusion.
+
+### Judge-human agreement
+
+| | |
+|---|---|
+| pairs compared | 31 |
+| raw agreement, 4 classes | 0.839 |
+| raw agreement, merge vs keep | 0.871 |
+| **Cohen's kappa, merge vs keep** | **0.729** |
+| 95% CI (bootstrap) | **[0.475, 0.936]** |
+
+0.61-0.80 is conventionally "substantial agreement", so **kill condition 4 does not fire**.
+The interval is wide and stays wide: resampling from the observed agreement rate, 50 pairs
+would put the lower bound at 0.521 and **100 pairs at 0.588**, still short of 0.6. The width
+is a property of the agreement rate, not of the sample size, so labelling more would have
+bought almost nothing. That was computed before spending the effort rather than after.
+
+**The disagreements have a direction.** In 3 of 5 the machine said `same` where the human said
+`distinct`; the reverse happened once. The judge **over-merges**, which is the error the
+project declared in advance as the worse one.
+
+### The threshold is robust to who labelled it
+
+This is the load-bearing result, because Phase 2 automates labelling across five more dockets.
+
+| labels used | threshold at precision 1.00 | collapse |
+|---|---|---|
+| machine (99 pairs) | 0.9631 | 11.51% |
+| **human (30 pairs)** | **0.9641** | **11.22%** |
+
+**The two operating points differ by 0.001.** Despite kappa of 0.73 and a measurable
+over-merging bias, the disagreements sit in the middle of the similarity range and do not move
+the precision-1.0 boundary. So the machine labels were fit for the purpose they were used for
+-- and that is now evidence rather than assumption, which it could not have been without
+labelling blind first.
+
+### The correction: embeddings do earn their cost
+
+With **both** rungs' thresholds selected by the same procedure, on the same human labels, at
+matched precision, and clustered with complete linkage:
+
+| rung | threshold | collapse |
+|---|---|---|
+| exact hash | - | 3.31% |
+| MinHash | jaccard **0.789** | **7.34%** |
+| embeddings | cosine **0.964** | **11.22%** |
+
+**Embeddings collapse 53% more than MinHash at equal precision.** Kill condition 2 does not
+fire: 11.22% against exact's 3.31% is 3.4x, and against MinHash 1.5x.
+
+**This reverses what this document previously said, twice**, and the reason is worth keeping.
+Earlier versions compared the rungs at round numbers chosen before any labels existed --
+MinHash at 0.70 against embeddings at 0.97 -- and reported first that embeddings led by 0.75
+points, then that MinHash led by 0.61. Both were artifacts. **A similarity threshold is not
+comparable across methods**: 0.70 and 0.97 are not the same operating point, so those
+comparisons measured calibration rather than ability. Only a threshold selected per method,
+against labels, at matched precision, compares the methods themselves.
+
+That is also the answer to "why bother hand-labelling 31 pairs when the pipeline runs without
+them". Without labels there is no principled threshold, and without a principled threshold the
+headline comparison of the whole ladder was wrong in both directions.
 
 ## What this does not establish
 
